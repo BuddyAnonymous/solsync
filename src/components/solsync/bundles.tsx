@@ -1,0 +1,214 @@
+"use client";
+
+import { useState, FC, MouseEvent, FormEvent } from 'react';
+import Head from 'next/head';
+import Script from 'next/script';
+
+const BundlesPage: FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleModalBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      closeModal();
+    }
+  };
+
+  const handleCreateBundleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // TODO: implement bundle creation logic
+    closeModal();
+  };
+
+  return (
+    <>
+      <Head>
+        {/* Google Font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </Head>
+
+      {/* Scripts */}
+      <Script src="https://cdn.jsdelivr.net/npm/apexcharts" strategy="beforeInteractive" />
+      <Script src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
+      <Script id="fontawesome-config" strategy="beforeInteractive">
+        {`window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };`}
+      </Script>
+      <Script
+        src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
+        strategy="beforeInteractive"
+      />
+
+      {/* Global Styles */}
+      <style jsx global>{`
+        * { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { display: none; }
+        .highlighted-section { outline: 2px solid #3F20FB; background-color: rgba(63,32,251,0.1); }
+        .edit-button { position: absolute; z-index: 1000; }
+      `}</style>
+
+      <div className="h-full text-base-content bg-gray-900 text-gray-200">
+        {/* Header */}
+        <header className="fixed top-0 left-0 w-full bg-gray-900 border-b border-gray-800 z-50">
+          <div className="container mx-auto px-4 flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-4">
+                <i className="fa-solid fa-cube text-white" />
+              </div>
+              <div className="relative">
+                <div className="flex items-center bg-gray-800 rounded-lg px-3 py-2">
+                  <i className="fa-solid fa-search text-gray-400 mr-2" />
+                  <input
+                    className="bg-transparent outline-none w-60 text-sm text-gray-200"
+                    placeholder="Search transactions, addresses or bundles"
+                    type="text"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <button className="rounded-full bg-gray-800 p-2 cursor-pointer mr-2">
+                <i className="fa-solid fa-bell text-gray-400" />
+              </button>
+              <button className="rounded-full bg-gray-800 p-2 cursor-pointer mr-2">
+                <i className="fa-regular fa-circle-question text-gray-400" />
+              </button>
+              <div className="flex items-center bg-gray-800 rounded-lg px-3 py-2 mr-2">
+                <span className="text-gray-200 font-medium mr-1">0.00</span>
+                <i className="fa-solid fa-diamond text-gray-400 text-xs" />
+              </div>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center mr-2">
+                  <span className="text-xs text-white">JD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Sidebar */}
+        <div className="fixed left-0 top-16 h-full w-16 bg-gray-900 border-r border-gray-800">
+          <div className="flex flex-col items-center py-4">
+            {['house', 'chart-simple', 'layer-group', 'user', 'wallet'].map((icon) => (
+              <span
+                key={icon}
+                className={`p-3 mb-2 cursor-pointer ${icon === 'layer-group' ? 'bg-blue-900 rounded-lg text-blue-400' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <i className={`fa-solid fa-${icon}`} />
+              </span>
+            ))}
+            <div className="mt-auto">
+              <span className="p-3 text-gray-400 hover:text-gray-200 cursor-pointer">
+                <i className="fa-solid fa-gear" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <main className="pt-16 ml-16 min-h-screen container mx-auto px-6 py-6">
+          {/* Breadcrumb */}
+          <nav className="flex items-center text-sm text-gray-400 mb-6">
+            {['Home', 'Profiles', 'Personal'].map((crumb, idx) => (
+              <span
+                key={crumb}
+                className={`${idx < 2 ? 'hover:text-blue-400 cursor-pointer mr-2' : 'text-gray-300'} flex items-center`}
+              >
+                {crumb}
+                {idx < 2 && <i className="fa-solid fa-chevron-right mx-2 text-xs" />}
+              </span>
+            ))}
+          </nav>
+
+          {/* Page Title & Create Button */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-white">Bundles</h1>
+            <button onClick={openModal} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center">
+              <i className="fa-solid fa-plus mr-2" /> Create Bundle
+            </button>
+          </div>
+
+          {/* TODO: Stats, Bundles List, Transactions Table */}
+        </main>
+
+        {/* Modal */}
+        {isModalOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+            onClick={handleModalBackdropClick}
+          >
+            <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white">Create New Bundle</h3>
+                <button onClick={closeModal} className="text-gray-400 hover:text-white">
+                  <i className="fa-solid fa-xmark text-xl" />
+                </button>
+              </div>
+              <form onSubmit={handleCreateBundleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2" htmlFor="bundleName">
+                    Bundle Name
+                  </label>
+                  <input
+                    id="bundleName"
+                    name="bundleName"
+                    type="text"
+                    placeholder="Enter bundle name"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-gray-300 mb-2">Solana Addresses</label>
+                  {/* TODO: dynamic address fields */}
+                  <button type="button" className="mt-2 text-blue-400 hover:text-blue-300 flex items-center">
+                    <i className="fa-solid fa-plus mr-2" /> Add Another Address
+                  </button>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-300">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
+                    Create Bundle
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-10 border-t border-gray-800 bg-gray-900 py-6 ml-16">
+          <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-3">
+                <i className="fa-solid fa-cube text-white" />
+              </div>
+              <span className="text-gray-300 font-medium">SolTracker</span>
+            </div>
+            <div className="flex space-x-6 mb-4 md:mb-0">
+              {['twitter', 'discord', 'github'].map((brand) => (
+                <span key={brand} className="text-gray-400 hover:text-gray-200 cursor-pointer">
+                  <i className={`fa-brands fa-${brand}`} />
+                </span>
+              ))}
+              <span className="text-gray-400 hover:text-gray-200 cursor-pointer">
+                <i className="fa-solid fa-circle-info" />
+              </span>
+            </div>
+            <div className="text-sm text-gray-500">© 2025 SolTracker. All rights reserved. Solana is a registered trademark.</div>
+          </div>
+        </footer>
+      </div>
+    </>
+  );
+};
+
+export default BundlesPage;
