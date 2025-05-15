@@ -125,3 +125,21 @@
   @apply !border !bg-background !shadow-xs hover:!bg-accent !text-accent-foreground hover:!text-accent-foreground dark:!bg-input/30 !border-input/10 dark:!border-input dark:hover:!bg-input/50;
   @apply !px-2 !py-[6px] !rounded-md !text-sm !font-semibold !shadow-sm !transition-all;
 }
+.scrollable::-webkit-scrollbar-track {
+  background-color: red;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: red;
+  border-radius: 4px;
+}
+
+.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable {
+  overflow-y: scroll;  /* always show */
+  max-height: 300px;
+}
+

@@ -1,25 +1,68 @@
 "use client";
 
-import { useState, FC, MouseEvent, FormEvent } from 'react';
+import { useState, FC, MouseEvent, FormEvent, useRef } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
+import BundleComp from './Bundle';
+import DeFiBundle from './DefiBundle';
+import NFTBundle from './NFTBundles';
+import TransactionTable from './TransactionTable';
+import { Address } from 'gill';
+
+type Bundle = {
+  name: string;
+  addresses: string[];
+}
 
 const BundlesPage: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [userBundles, setUserBundles] = useState<Bundle[]>([]);
+  const [bundleName, setBundleName] = useState('');
+  const [addresses, setAddresses] = useState<string[]>([]); // Start with one input
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const mouseDownOnBackdrop = useRef(false);
 
-  const handleModalBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      closeModal();
-    }
+  const handleAddClick = () => {
+    setAddresses([...addresses, '']); // Add empty input
   };
 
-  const handleCreateBundleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleInputChange = (index, value) => {
+    const newAddresses = [...addresses];
+    newAddresses[index] = value;
+    setAddresses(newAddresses);
+  };
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setBundleName(''); // Reset text when closing the modal
+    setAddresses([]); // Reset addresses when closing the modal
+  }
+
+  const handleCreateBundleSubmit = (e: FormEvent<HTMLFormElement>, bundleAddresses: string[]) => {
     e.preventDefault();
-    // TODO: implement bundle creation logic
+    const newBundle: Bundle = {
+      name: bundleName,
+      addresses:  addresses,
+    };
+    setUserBundles((prevBundles) => [...prevBundles, newBundle]);
     closeModal();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    mouseDownOnBackdrop.current = e.target === e.currentTarget;
+  };
+
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (mouseDownOnBackdrop.current && e.target === e.currentTarget) {
+      closeModal();
+    }
+    mouseDownOnBackdrop.current = false; // Reset
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -112,10 +155,10 @@ const BundlesPage: FC = () => {
         </div>
 
         {/* Main Content */}
-        <main className="pt-16 ml-16 min-h-screen container mx-auto px-6 py-6">
+        <main className="pt-16 min-h-screen container mx-auto px-6 py-6">
           {/* Breadcrumb */}
           <nav className="flex items-center text-sm text-gray-400 mb-6">
-            {['Home', 'Profiles', 'Personal'].map((crumb, idx) => (
+            {['Home', 'Personal'].map((crumb, idx) => (
               <span
                 key={crumb}
                 className={`${idx < 2 ? 'hover:text-blue-400 cursor-pointer mr-2' : 'text-gray-300'} flex items-center`}
@@ -133,6 +176,25 @@ const BundlesPage: FC = () => {
               <i className="fa-solid fa-plus mr-2" /> Create Bundle
             </button>
           </div>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-medium">Your Bundles</h2>
+              <div className="relative w-64">
+                <input type="text" onChange={handleSearchInputChange} placeholder="Search bundles" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></input>
+                <i className="fa-solid fa-search absolute right-3 top-2.5 text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            {userBundles.map((bundle, index) => (
+              bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) && (
+              <BundleComp key={index} bundleName={bundle.name} bundleAddresses={bundle.addresses} setUserBundles={setUserBundles} userBundles={userBundles} />)
+            ))}
+          </div>
+          <div id="transactions-section" className="mt-10">
+            <h2 className="text-xl font-medium mb-4">Recent Transactions</h2>
+            <TransactionTable />
+          </div>
 
           {/* TODO: Stats, Bundles List, Transactions Table */}
         </main>
@@ -141,7 +203,8 @@ const BundlesPage: FC = () => {
         {isModalOpen && (
           <div
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-            onClick={handleModalBackdropClick}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
           >
             <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
@@ -160,14 +223,37 @@ const BundlesPage: FC = () => {
                     name="bundleName"
                     type="text"
                     placeholder="Enter bundle name"
+                    onChange={(e) => setBundleName(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
-                <div className="mb-6">
-                  <label className="block text-gray-300 mb-2">Solana Addresses</label>
-                  {/* TODO: dynamic address fields */}
-                  <button type="button" className="mt-2 text-blue-400 hover:text-blue-300 flex items-center">
+                <div className="w-full">
+                  {/* Scrollable container for inputs */}
+                  <div
+                    className="space-y-2 scrollable"
+                    style={{
+                      maxHeight: '300px',
+                    }}
+                  >
+                    {addresses.map((value, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        value={value}
+                        onChange={(e) => handleInputChange(index, e.target.value)}
+                        placeholder={`Address ${index + 1}`}
+                        className="border p-2 w-full"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Button stays outside of scroll area */}
+                  <button
+                    type="button"
+                    onClick={handleAddClick}
+                    className="mt-2 text-blue-400 hover:text-blue-300 flex items-center"
+                  >
                     <i className="fa-solid fa-plus mr-2" /> Add Another Address
                   </button>
                 </div>
