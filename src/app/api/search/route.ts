@@ -20,44 +20,44 @@ export async function GET(request: NextRequest) {
 
     // const transactionFilter = JSON.parse(filter) as Filter;
 
-    if (transactionFilter.account === 'THIS_ADDRESS') {
-        transactionFilter.account = addresses;
-    }
+    // if (transactionFilter.account === 'THIS_ADDRESS') {
+    //     transactionFilter.account = addresses;
+    // }
 
-    if (transactionFilter.tokenFilter) {
-        if (transactionFilter.tokenFilter[0].tokenAddress === 'ALL_STABLECOINS') {
-            let amountLessThan = transactionFilter.tokenFilter[0].amountLessThan;
-            let amountGreaterThan = transactionFilter.tokenFilter[0].amountGreaterThan;
-            let direction = transactionFilter.tokenFilter[0].direction;
+    // if (transactionFilter.tokenFilter) {
+    //     if (transactionFilter.tokenFilter[0].tokenAddress === 'ALL_STABLECOINS') {
+    //         let amountLessThan = transactionFilter.tokenFilter[0].amountLessThan;
+    //         let amountGreaterThan = transactionFilter.tokenFilter[0].amountGreaterThan;
+    //         let direction = transactionFilter.tokenFilter[0].direction;
 
-            transactionFilter.tokenFilter = Object.values(stablecoinMints).map(tokenAddress => ({
-                tokenAddress,
-                amountLessThan: amountLessThan,
-                amountGreaterThan: amountGreaterThan,
-                direction: direction,
-            }));
-        }
-    }
+    //         transactionFilter.tokenFilter = Object.values(stablecoinMints).map(tokenAddress => ({
+    //             tokenAddress,
+    //             amountLessThan: amountLessThan,
+    //             amountGreaterThan: amountGreaterThan,
+    //             direction: direction,
+    //         }));
+    //     }
+    // }
 
-    for (const token of transactionFilter.tokenFilter || []) {
-        if (token.tokenAddress === 'NATIVE_SOL') {
-            if (token.amountGreaterThan !== null) {
-                token.amountGreaterThan *= LAMPORTS_PER_SOL;
-            }
-            if (token.amountLessThan !== null) {
-                token.amountLessThan *= LAMPORTS_PER_SOL;
-            }
-        }
-    }
+    // for (const token of transactionFilter.tokenFilter || []) {
+    //     if (token.tokenAddress === 'NATIVE_SOL') {
+    //         if (token.amountGreaterThan !== null) {
+    //             token.amountGreaterThan *= LAMPORTS_PER_SOL;
+    //         }
+    //         if (token.amountLessThan !== null) {
+    //             token.amountLessThan *= LAMPORTS_PER_SOL;
+    //         }
+    //     }
+    // }
 
-    if (transactionFilter.txNum === null) {
-        transactionFilter.txNum = 5;
-    }
+    // if (transactionFilter.txNum === null) {
+    //     transactionFilter.txNum = 5;
+    // }
 
-    console.log('Filter: ', transactionFilter);
+    // console.log('Filter: ', transactionFilter);
 
-    let results = await fetchTransactionsAndApplyFilters(transactionFilter);
-    // let results = mockResults;
+    // let results = await fetchTransactionsAndApplyFilters(transactionFilter);
+    let results = mockResults;
 
     console.log('Results: ', results);
 
