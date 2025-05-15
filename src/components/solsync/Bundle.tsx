@@ -6,10 +6,21 @@ interface BundleComp {
   bundleAddresses: string[];
   setUserBundles: React.Dispatch<React.SetStateAction<any>>;
   userBundles: any;
+  editing: Bundle;
+  setEditing: React.Dispatch<React.SetStateAction<Bundle>>;
 }
 
-const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUserBundles, userBundles }) => {
-const [editing, setEditing] = useState(false);
+type Bundle = {
+  name: string;
+  addresses: string[];
+}
+
+const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUserBundles, userBundles, editing, setEditing }) => {
+let currBundle: Bundle = {
+  name: bundleName,
+  addresses: bundleAddresses
+}
+
 const removeBundle = () => {
   // Find the index of the first matching bundle
   const indexToRemove = userBundles.findIndex(
@@ -26,7 +37,7 @@ const removeBundle = () => {
   }
 };
 const handleEditBundle = () => {
-  setEditing(true);
+  setEditing(currBundle);
 }
 
   return (

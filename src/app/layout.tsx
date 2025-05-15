@@ -3,6 +3,7 @@ import './globals.css'
 import { AppProviders } from '@/components/app-providers'
 import { AppLayout } from '@/components/app-layout'
 import React from 'react'
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export const metadata: Metadata = {
   title: 'Placeholder',

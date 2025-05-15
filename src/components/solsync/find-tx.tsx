@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import "./find-tx.css";
 import { useWalletUi } from '@wallet-ui/react';
+import TransactionTableTx from './TransactionTableTx';
 
 interface Entry {
     signature: string;
@@ -270,7 +271,7 @@ const FindTx = () => {
             const data = await res.json();
             setTransactions(data.results || []);
         } catch (err) {
-            
+
         }
     };
 
@@ -295,85 +296,147 @@ const FindTx = () => {
 
     let previousSignature = null;
     let isAlternate = false;
-    return (
-        <div className="container">
-            <div className='topContainer'>
-                <div className='searchContainer'>
-                    <input type="text" className='search' placeholder='Search...' onChange={(e) => setQuery(e.target.value)}></input>
-                </div>
-                <div className='searchButtonContainer' onClick={fetchSearchResults}>Search</div>
-                <button className="downloadBtn" onClick={() => downloadCSV(transactions)}>Export CSV</button>
-            </div>
-            <ul className="responsive-table">
-                <li className="table-header">
-                    <div className="col headerCol" style={{ left: "2%" }}>Signature</div>
-                    <div className="col headerCol" style={{ left: "19%" }}>Time</div>
-                    <div className="col headerCol" style={{ left: "30%" }}>Action</div>
-                    <div className="col headerCol" style={{ left: "46%" }}>From</div>
-                    <div className="col headerCol" style={{ left: "62%" }}>To</div>
-                    <div className="col headerCol" style={{ left: "74%" }}>Amount</div>
-                    <div className="col headerCol" style={{ left: "88%" }}>Token</div>
-                </li>
+    // return (
+    //     <div className="container">
+    //         <div className='topContainer'>
+    //             <div className='searchContainer'>
+    //                 <input type="text" className='search' placeholder='Search...' onChange={(e) => setQuery(e.target.value)}></input>
+    //             </div>
+    //             <div className='searchButtonContainer' onClick={fetchSearchResults}>Search</div>
+    //             <button className="downloadBtn" onClick={() => downloadCSV(transactions)}>Export CSV</button>
+    //         </div>
+    //         <ul className="responsive-table">
+    //             <li className="table-header">
+    //                 <div className="col headerCol" style={{ left: "2%" }}>Signature</div>
+    //                 <div className="col headerCol" style={{ left: "19%" }}>Time</div>
+    //                 <div className="col headerCol" style={{ left: "30%" }}>Action</div>
+    //                 <div className="col headerCol" style={{ left: "46%" }}>From</div>
+    //                 <div className="col headerCol" style={{ left: "62%" }}>To</div>
+    //                 <div className="col headerCol" style={{ left: "74%" }}>Amount</div>
+    //                 <div className="col headerCol" style={{ left: "88%" }}>Token</div>
+    //             </li>
 
-                {transactions.map((tx, index) => {
-                    if (tx.signature !== previousSignature) {
-                        isAlternate = !isAlternate;
-                        previousSignature = tx.signature;
-                    }
-                    return (
-                        <li className={`table-row ${isAlternate ? 'alternate-row' : ''}`} key={index}>
-                            <div className="col col-1-1" data-label="Signature">
-                                <div className='col-1'>
-                                    <a href={`https://www.solscan.io/tx/${tx.signature}`} className='signatureLink'>{shorten(tx.signature)}</a>
-                                    <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.signature)} />
-                                    <div className="tooltip">{tx.signature}</div>
+    //             {transactions.map((tx, index) => {
+    //                 if (tx.signature !== previousSignature) {
+    //                     isAlternate = !isAlternate;
+    //                     previousSignature = tx.signature;
+    //                 }
+    //                 return (
+    //                     <li className={`table-row ${isAlternate ? 'alternate-row' : ''}`} key={index}>
+    //                         <div className="col col-1-1" data-label="Signature">
+    //                             <div className='col-1'>
+    //                                 <a href={`https://www.solscan.io/tx/${tx.signature}`} className='signatureLink'>{shorten(tx.signature)}</a>
+    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.signature)} />
+    //                                 <div className="tooltip">{tx.signature}</div>
+    //                             </div>
+    //                         </div>
+    //                         <div className='col col-2-1'>
+    //                             <div className="col-2" data-label="Time">
+    //                                 <div>{timeAgo(tx.time)}</div>
+    //                                 <div className='tooltip tooltipTime'>{formatTimestamp(tx.time)}</div>
+    //                             </div>
+    //                         </div>
+    //                         <div className="col col-3" data-label="Action">
+    //                             {tx.action}
+    //                         </div>
+    //                         <div className="col col-4-1" data-label="From">
+    //                             <div className='col-4'>
+    //                                 <a href={`https://www.solscan.io/account/${tx.from}`} className='signatureLink'>{shorten(tx.from)}</a>
+    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.from)} />
+    //                                 <div className="tooltip tooltipFrom">{tx.from}</div>
+    //                             </div>
+    //                         </div>
+    //                         <div className="col col-5-1" data-label="To">
+    //                             <div className='col-5'>
+    //                                 <a href={`https://www.solscan.io/account/${tx.to}`} className='signatureLink'>{shorten(tx.to)}</a>
+    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.to)} />
+    //                                 <div className="tooltip tooltipTo">{tx.to}</div>
+    //                             </div>
+    //                         </div>
+    //                         <div className="col col-6" data-label="Amount">
+    //                             {tx.amount
+    //                                 ? tx.action === "TOKEN TRANSFER"
+    //                                     ? `${tx.amount}`
+    //                                     : `${(parseFloat(tx.amount) / Math.pow(10, tx.decimals)).toFixed(7)}`
+    //                                 : "N/A"}
+    //                         </div>
+    //                         <div className="col col-7-1" data-label="Token">
+    //                             <div className='col-7'>
+    //                                 <a href={`https://www.solscan.io/account/${tx.token}`} className='signatureLink'>
+    //                                     {isLoading ? "Loading..." : (tx.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[tx.token] || "Unknown")}
+    //                                 </a>
+    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.token)} />
+    //                                 <div className="tooltip tooltipToken">
+    //                                     {tx.token}
+    //                                 </div>
+    //                             </div>
+    //                         </div>
+    //                     </li>
+    //                 );
+    //             })}
+    //         </ul>
+    //     </div>
+    // );
+    return (
+        <div className="min-h-screen bg-gray-900 text-gray-100">
+            {/* <!-- Header --> */}
+            <header id="header" className="border-b border-gray-800 bg-gray-900">
+                <div className="container mx-auto px-4 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <i className="fa-brands fa-solana text-purple-500 text-2xl"></i>
+                            <span className="text-xl font-bold">Solana Explorer</span>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg flex items-center">
+                                <i className="fa-solid fa-wallet mr-2"></i>
+                                Connect Wallet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main className="container mx-auto px-4 py-6">
+                {/* <!-- Breadcrumb --> */}
+                <div id="breadcrumb" className="mb-6">
+                    <div className="flex items-center space-x-2 text-sm">
+                        <span className="text-purple-400 hover:text-purple-300 cursor-pointer">Home</span>
+                        <i className="fa-solid fa-chevron-right text-gray-600"></i>
+                        <span className="text-purple-400 hover:text-purple-300 cursor-pointer">Profiles</span>
+                        <i className="fa-solid fa-chevron-right text-gray-600"></i>
+                        <span className="text-gray-400">Personal</span>
+                    </div>
+                </div>
+
+                {/* <!-- Search and Filters --> */}
+                <div id="search-section" className="mb-8">
+                    <div className="bg-gray-800 p-6 rounded-xl">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <input type="text" placeholder="Search by transaction signature, address or block" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:border-purple-500"></input>
+                                        <i className="fa-solid fa-search absolute left-3 top-4 text-gray-400"></i>
                                 </div>
                             </div>
-                            <div className='col col-2-1'>
-                                <div className="col-2" data-label="Time">
-                                    <div>{timeAgo(tx.time)}</div>
-                                    <div className='tooltip tooltipTime'>{formatTimestamp(tx.time)}</div>
-                                </div>
+                            <div className="flex gap-4">
+                                <select className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500">
+                                    <option>All Types</option>
+                                    <option>Transfer</option>
+                                    <option>Swap</option>
+                                    <option>NFT</option>
+                                </select>
+                                <button className="bg-gray-700 hover:bg-gray-600 px-4 rounded-lg">
+                                    <i className="fa-solid fa-filter"></i>
+                                </button>
                             </div>
-                            <div className="col col-3" data-label="Action">
-                                {tx.action}
-                            </div>
-                            <div className="col col-4-1" data-label="From">
-                                <div className='col-4'>
-                                    <a href={`https://www.solscan.io/account/${tx.from}`} className='signatureLink'>{shorten(tx.from)}</a>
-                                    <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.from)} />
-                                    <div className="tooltip tooltipFrom">{tx.from}</div>
-                                </div>
-                            </div>
-                            <div className="col col-5-1" data-label="To">
-                                <div className='col-5'>
-                                    <a href={`https://www.solscan.io/account/${tx.to}`} className='signatureLink'>{shorten(tx.to)}</a>
-                                    <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.to)} />
-                                    <div className="tooltip tooltipTo">{tx.to}</div>
-                                </div>
-                            </div>
-                            <div className="col col-6" data-label="Amount">
-                                {tx.amount
-                                    ? tx.action === "TOKEN TRANSFER"
-                                        ? `${tx.amount}`
-                                        : `${(parseFloat(tx.amount) / Math.pow(10, tx.decimals)).toFixed(7)}`
-                                    : "N/A"}
-                            </div>
-                            <div className="col col-7-1" data-label="Token">
-                                <div className='col-7'>
-                                    <a href={`https://www.solscan.io/account/${tx.token}`} className='signatureLink'>
-                                        {isLoading ? "Loading..." : (tx.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[tx.token] || "Unknown")}
-                                    </a>
-                                    <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.token)} />
-                                    <div className="tooltip tooltipToken">
-                                        {tx.token}
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    );
-                })}
-            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {/* <!-- Transactions Table --> */}
+                <TransactionTableTx/>
+            </main>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FC, MouseEvent, FormEvent, useRef } from 'react';
+import { useState, FC, MouseEvent, FormEvent, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
 import BundleComp from './Bundle';
@@ -20,8 +20,16 @@ const BundlesPage: FC = () => {
   const [bundleName, setBundleName] = useState('');
   const [addresses, setAddresses] = useState<string[]>([]); // Start with one input
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [editing, setEditing] = useState<Bundle | null>(null);
 
   const mouseDownOnBackdrop = useRef(false);
+
+  useEffect(() => {
+    if (editing) {
+      setBundleName(editing.name);
+      setAddresses(editing.addresses);
+    }
+  }, [editing]);
 
   const handleAddClick = () => {
     setAddresses([...addresses, '']); // Add empty input
@@ -35,6 +43,7 @@ const BundlesPage: FC = () => {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
+    setEditing(null); // Reset editing state when closing the modal
     setIsModalOpen(false);
     setBundleName(''); // Reset text when closing the modal
     setAddresses([]); // Reset addresses when closing the modal
@@ -44,11 +53,28 @@ const BundlesPage: FC = () => {
     e.preventDefault();
     const newBundle: Bundle = {
       name: bundleName,
-      addresses:  addresses,
+      addresses: addresses,
     };
     setUserBundles((prevBundles) => [...prevBundles, newBundle]);
     closeModal();
   };
+
+  const handleEditBundle = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const updatedBundle: Bundle = {
+    ...editing,
+    name: bundleName,
+    addresses: addresses,
+  };
+
+  setUserBundles(prevBundles =>
+    prevBundles.map(bundle =>
+      bundle.name === editing!.name && editing!.addresses === bundle.addresses ? updatedBundle : bundle
+    )
+  );
+  closeModal();
+  }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     mouseDownOnBackdrop.current = e.target === e.currentTarget;
@@ -69,10 +95,9 @@ const BundlesPage: FC = () => {
     <>
       <Head>
         {/* Google Font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com"></link>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin></link>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Sora:wght@100..800&display=swap" rel="stylesheet"></link>
       </Head>
 
       {/* Scripts */}
@@ -188,7 +213,7 @@ const BundlesPage: FC = () => {
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {userBundles.map((bundle, index) => (
               bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) && (
-              <BundleComp key={index} bundleName={bundle.name} bundleAddresses={bundle.addresses} setUserBundles={setUserBundles} userBundles={userBundles} />)
+                <BundleComp key={index} bundleName={bundle.name} bundleAddresses={bundle.addresses} setUserBundles={setUserBundles} userBundles={userBundles} setEditing={setEditing} editing={editing} />)
             ))}
           </div>
           <div id="transactions-section" className="mt-10">
@@ -200,7 +225,7 @@ const BundlesPage: FC = () => {
         </main>
 
         {/* Modal */}
-        {isModalOpen && (
+        {(isModalOpen || editing !== null) && (
           <div
             className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
             onMouseDown={handleMouseDown}
@@ -208,16 +233,26 @@ const BundlesPage: FC = () => {
           >
             <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white">Create New Bundle</h3>
+                <h3 className="text-xl font-bold text-white">{editing ? "Edit Bundle": "Create New Bundle"}</h3>
                 <button onClick={closeModal} className="text-gray-400 hover:text-white">
                   <i className="fa-solid fa-xmark text-xl" />
                 </button>
               </div>
-              <form onSubmit={handleCreateBundleSubmit}>
+              <form onSubmit={editing ? handleEditBundle : handleCreateBundleSubmit}>
                 <div className="mb-4">
                   <label className="block text-gray-300 mb-2" htmlFor="bundleName">
                     Bundle Name
                   </label>
+                  {editing ? <input
+                    id="bundleName"
+                    name="bundleName"
+                    type="text"
+                    placeholder="Enter bundle name"
+                    value={bundleName}
+                    onChange={(e) => setBundleName(e.target.value)}
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />:
                   <input
                     id="bundleName"
                     name="bundleName"
@@ -227,6 +262,7 @@ const BundlesPage: FC = () => {
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+}
                 </div>
                 <div className="w-full">
                   {/* Scrollable container for inputs */}
@@ -262,7 +298,7 @@ const BundlesPage: FC = () => {
                     Cancel
                   </button>
                   <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white">
-                    Create Bundle
+                    {editing ? "Confirm Edit" : "Create Bundle"}
                   </button>
                 </div>
               </form>
