@@ -253,15 +253,15 @@ function downloadCSV(entries) {
 
 const FindTx = () => {
     const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>({});
-    const [query, setQuery] = useState('Test query');
     const [transactions, setTransactions] = useState<Entry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [addresses, setAddresses] = useState<string[]>([]);
     const { account } = useWalletUi();
 
     // Fetch search results whenever the query changes
     const fetchSearchResults = async () => {
         try {
-            const res = await fetch(`api/search?address=${account?.address}&query=${encodeURIComponent(query)}`);
+            const res = await fetch(`api/search?addresses=${addresses}`);
 
             if (!res.ok) {
                 const errorData = await res.json();
