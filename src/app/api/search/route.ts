@@ -9,7 +9,7 @@ import { getAccount, getMint } from "@solana/spl-token";
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
-    const addresses = JSON.parse(searchParams.get('addresses'))
+    const addresses = JSON.parse(decodeURIComponent(searchParams.get('addresses')))
 
     if (!addresses) {
         return new Response(JSON.stringify({ error: 'Addresses parameter is required' }), {

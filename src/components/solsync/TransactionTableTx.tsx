@@ -1,7 +1,6 @@
 import React from "react";
 
 const TransactionTable = ({bundle}) => {
-  console.log("Bundle LOLOLOLL:", JSON.stringify(bundle));
   return (
     <div id="transactions-table" className="bg-gray-800 rounded-xl overflow-hidden">
       <div className="overflow-x-auto">

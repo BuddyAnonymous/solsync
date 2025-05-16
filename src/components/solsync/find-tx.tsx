@@ -259,12 +259,14 @@ const FindTx = () => {
     const [addresses, setAddresses] = useState<string[]>([]);
     const { account } = useWalletUi();
     const searchParams = useSearchParams();
+    const [bundle, setBundle] = useState<Bundle | null>(null);
+    const url = `http://localhost:3000/api/search?addresses=${encodeURIComponent(JSON.stringify(bundle?.addresses))}`;
+    console.log(url);
     interface Bundle {
         name: string;
-        addresses : string[];
+        addresses: string[];
         // Add other properties if needed
     }
-    const [bundle, setBundle] = useState<Bundle | null>(null);
     // Fetch search results whenever the query changes
     const fetchSearchResults = async () => {
         try {
@@ -281,6 +283,11 @@ const FindTx = () => {
 
         }
     };
+
+    fetch(url)
+  .then(res => res.json())
+  .then(data => console.log(JSON.stringify(data)))
+  .catch(err => console.error(err));
 
     useEffect(() => {
         const bundleStr = searchParams.get('bundle')
@@ -395,9 +402,6 @@ const FindTx = () => {
     //         </ul>
     //     </div>
     // );
-    useEffect(() => {
-  console.log('bundle changed:', JSON.stringify(bundle));
-}, [bundle]);
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100">
@@ -435,7 +439,7 @@ const FindTx = () => {
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1">
                                 <div className="relative">
-                                    <input type="text" placeholder="Search by transaction signature, address or block" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:border-purple-500"></input>
+                                    <input type="text" placeholder="Search by transaction signature, address or block" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:border-purple-500" onChange={(e) => setQuery(e.target.value)}></input>
                                     <i className="fa-solid fa-search absolute left-3 top-4 text-gray-400"></i>
                                 </div>
                             </div>
