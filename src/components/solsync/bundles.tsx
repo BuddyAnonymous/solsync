@@ -8,6 +8,7 @@ import DeFiBundle from './DefiBundle';
 import NFTBundle from './NFTBundles';
 import TransactionTable from './TransactionTable';
 import { Address } from 'gill';
+import { useWalletUi } from '@wallet-ui/react';
 
 type Bundle = {
   name: string;
@@ -20,6 +21,8 @@ const BundlesPage: FC = () => {
   const [addresses, setAddresses] = useState<string[]>([]); // Start with one input
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editing, setEditing] = useState<Bundle | null>(null);
+  const { account } = useWalletUi()
+  const [accountTransactions, setAccountTransactions] = useState([]);
   const [userBundles, setUserBundles] = useState<Bundle[]>(() => {
   if (typeof window === 'undefined') return []; // for SSR safety
   try {
@@ -42,6 +45,18 @@ const BundlesPage: FC = () => {
       setAddresses(editing.addresses);
     }
   }, [editing]);
+
+  useEffect(() => {
+    console.log('Account:', account);
+          if (account !== null && account !== undefined && account.address !== null && account.address !== undefined) {
+              const url = `http://localhost:3000/api/search?addresses=[${encodeURIComponent(JSON.stringify(account.address))}]`;
+              fetch(url)
+                  .then(res => res.json())
+                  .then(data => setAccountTransactions(data.results))
+                  .catch(err => console.error(err));
+  
+          }
+      }), [account];
 
   const handleAddClick = () => {
     setAddresses([...addresses, '']); // Add empty input

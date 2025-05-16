@@ -8,11 +8,12 @@ const TransactionTable = ({bundle}) => {
           <thead className="bg-gray-700">
             <tr>
               <th className="px-6 py-4 text-left">Signature</th>
-              <th className="px-6 py-4 text-left">Block</th>
               <th className="px-6 py-4 text-left">Time</th>
-              <th className="px-6 py-4 text-left">Type</th>
+              <th className="px-6 py-4 text-left">Action</th>
+              <th className="px-6 py-4 text-left">From</th>
+              <th className="px-6 py-4 text-left">To</th>
               <th className="px-6 py-4 text-left">Amount</th>
-              <th className="px-6 py-4 text-left">Status</th>
+              <th className="px-6 py-4 text-left">Token</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -37,63 +38,6 @@ const TransactionTable = ({bundle}) => {
                 </td>
               </tr>
             ))}
-            <tr className="hover:bg-gray-750">
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <span className="text-purple-400">2TxP...8Zkp</span>
-                  <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer"></i>
-                </div>
-              </td>
-              <td className="px-6 py-4">219,126,345</td>
-              <td className="px-6 py-4">2 mins ago</td>
-              <td className="px-6 py-4">
-                <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full">Transfer</span>
-              </td>
-              <td className="px-6 py-4">12.5 SOL</td>
-              <td className="px-6 py-4">
-                <span className="text-green-400">
-                  <i className="fa-solid fa-check-circle mr-1"></i>Success
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-750">
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <span className="text-purple-400">7Kvm...9Pqx</span>
-                  <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer"></i>
-                </div>
-              </td>
-              <td className="px-6 py-4">219,126,344</td>
-              <td className="px-6 py-4">5 mins ago</td>
-              <td className="px-6 py-4">
-                <span className="bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full">Swap</span>
-              </td>
-              <td className="px-6 py-4">5.2 SOL</td>
-              <td className="px-6 py-4">
-                <span className="text-green-400">
-                  <i className="fa-solid fa-check-circle mr-1"></i>Success
-                </span>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-750">
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <span className="text-purple-400">9Hxn...2Wqr</span>
-                  <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer"></i>
-                </div>
-              </td>
-              <td className="px-6 py-4">219,126,343</td>
-              <td className="px-6 py-4">10 mins ago</td>
-              <td className="px-6 py-4">
-                <span className="bg-pink-500/20 text-pink-400 px-3 py-1 rounded-full">NFT</span>
-              </td>
-              <td className="px-6 py-4">1.8 SOL</td>
-              <td className="px-6 py-4">
-                <span className="text-red-400">
-                  <i className="fa-solid fa-times-circle mr-1"></i>Failed
-                </span>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
