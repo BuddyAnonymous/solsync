@@ -1,5 +1,7 @@
 import React from "react";
 import { useState } from "react";
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface BundleComp {
   bundleName: string;
@@ -16,29 +18,31 @@ type Bundle = {
 }
 
 const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUserBundles, userBundles, editing, setEditing }) => {
-let currBundle: Bundle = {
-  name: bundleName,
-  addresses: bundleAddresses
-}
-
-const removeBundle = () => {
-  // Find the index of the first matching bundle
-  const indexToRemove = userBundles.findIndex(
-    (bundle: any) => bundle.name === bundleName && bundle.addresses === bundleAddresses
-  );
-
-  // If a match is found, create a new array excluding that item
-  if (indexToRemove !== -1) {
-    const updatedBundles = [
-      ...userBundles.slice(0, indexToRemove),  // Items before the found index
-      ...userBundles.slice(indexToRemove + 1), // Items after the found index
-    ];
-    setUserBundles(updatedBundles);
+  let currBundle: Bundle = {
+    name: bundleName,
+    addresses: bundleAddresses
   }
-};
-const handleEditBundle = () => {
-  setEditing(currBundle);
-}
+
+  const encodedBundle = encodeURIComponent(JSON.stringify(currBundle));
+
+  const removeBundle = () => {
+    // Find the index of the first matching bundle
+    const indexToRemove = userBundles.findIndex(
+      (bundle: any) => bundle.name === bundleName && bundle.addresses === bundleAddresses
+    );
+
+    // If a match is found, create a new array excluding that item
+    if (indexToRemove !== -1) {
+      const updatedBundles = [
+        ...userBundles.slice(0, indexToRemove),  // Items before the found index
+        ...userBundles.slice(indexToRemove + 1), // Items after the found index
+      ];
+      setUserBundles(updatedBundles);
+    }
+  };
+  const handleEditBundle = () => {
+    setEditing(currBundle);
+  }
 
   return (
     <div
@@ -64,19 +68,19 @@ const handleEditBundle = () => {
             {bundleAddresses.length} addresses
           </span>
           <span className="inline-flex items-center ml-4">
-            <i className="fa-solid fa-clock mr-1"></i>  
+            <i className="fa-solid fa-clock mr-1"></i>
             Updated 2 days ago
           </span>
         </div>
 
         <div className="space-y-2 mb-4">
-          {bundleAddresses.slice(0, 2).map((address, index) => (
+          {bundleAddresses.slice(0, bundleAddresses.length === 3 ? 3 : 2).map((address, index) => (
             <div key={index} className="flex items-center text-xs bg-gray-700 rounded-lg px-3 py-2">
               <i className="fa-solid fa-wallet text-purple-400 mr-2"></i>
               <span className="text-gray-300 truncate">{address}</span>
             </div>
           ))}
-          {bundleAddresses.length > 2 && (
+          {bundleAddresses.length > 3 && (
             <div className="flex items-center text-xs bg-gray-700 rounded-lg px-3 py-2">
               <i className="fa-solid fa-wallet text-purple-400 mr-2"></i>
               <span className="text-gray-300">+ {bundleAddresses.length - 2} more</span>
@@ -86,12 +90,15 @@ const handleEditBundle = () => {
       </div>
 
       <div className="bg-gray-750 border-t border-gray-700 p-3">
-        <span className="flex justify-center items-center text-blue-400 hover:text-blue-300 cursor-pointer">
+        <Link
+          href={`/find-tx?bundle=${encodedBundle}`}
+          className="flex justify-center items-center text-blue-400 hover:text-blue-300 cursor-pointer"
+        >
           View Transactions <i className="fa-solid fa-arrow-right ml-2"></i>
-        </span>
+        </Link>
       </div>
     </div>
-    
+
   );
 };
 

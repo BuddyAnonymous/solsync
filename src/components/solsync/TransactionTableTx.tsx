@@ -1,6 +1,7 @@
 import React from "react";
 
-const TransactionTable = () => {
+const TransactionTable = ({bundle}) => {
+  console.log("Bundle LOLOLOLL:", JSON.stringify(bundle));
   return (
     <div id="transactions-table" className="bg-gray-800 rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
@@ -16,6 +17,27 @@ const TransactionTable = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
+            {bundle && bundle.addresses?.map((address, index) => (
+              <tr key={index} className="hover:bg-gray-750">
+                <td className="px-6 py-4">
+                  <div className="flex items-center">
+                    <span className="text-purple-400">{address}</span>
+                    <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer"></i>
+                  </div>
+                </td>
+                <td className="px-6 py-4">219,126,346</td>
+                <td className="px-6 py-4">1 min ago</td>
+                <td className="px-6 py-4">
+                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">Transfer</span>
+                </td>
+                <td className="px-6 py-4">0.5 SOL</td>
+                <td className="px-6 py-4">
+                  <span className="text-green-400">
+                    <i className="fa-solid fa-check-circle mr-1"></i>Success
+                  </span>
+                </td>
+              </tr>
+            ))}
             <tr className="hover:bg-gray-750">
               <td className="px-6 py-4">
                 <div className="flex items-center">
