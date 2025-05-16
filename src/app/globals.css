@@ -144,5 +144,9 @@
 }
 
 body, body * {
+ font-family: "Sora", sans-serif;
+}
 
+.fullwidth{
+  width: 100% !important;
 }

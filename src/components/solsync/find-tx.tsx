@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import "./find-tx.css";
 import { useWalletUi } from '@wallet-ui/react';
 import TransactionTableTx from './TransactionTableTx';
+import { useSearchParams } from 'next/navigation'
 
 interface Entry {
     signature: string;
@@ -257,7 +258,13 @@ const FindTx = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [addresses, setAddresses] = useState<string[]>([]);
     const { account } = useWalletUi();
-
+    const searchParams = useSearchParams();
+    interface Bundle {
+        name: string;
+        addresses : string[];
+        // Add other properties if needed
+    }
+    const [bundle, setBundle] = useState<Bundle | null>(null);
     // Fetch search results whenever the query changes
     const fetchSearchResults = async () => {
         try {
@@ -274,6 +281,17 @@ const FindTx = () => {
 
         }
     };
+
+    useEffect(() => {
+        const bundleStr = searchParams.get('bundle')
+        if (bundleStr) {
+            try {
+                setBundle(JSON.parse(decodeURIComponent(bundleStr)))
+            } catch (e) {
+                console.error('Error parsing bundle:', e)
+            }
+        }
+    }, [searchParams])
 
     // Preload all token symbols
     useEffect(() => {
@@ -377,6 +395,10 @@ const FindTx = () => {
     //         </ul>
     //     </div>
     // );
+    useEffect(() => {
+  console.log('bundle changed:', JSON.stringify(bundle));
+}, [bundle]);
+
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100">
             {/* <!-- Header --> */}
@@ -401,11 +423,9 @@ const FindTx = () => {
                 {/* <!-- Breadcrumb --> */}
                 <div id="breadcrumb" className="mb-6">
                     <div className="flex items-center space-x-2 text-sm">
-                        <span className="text-purple-400 hover:text-purple-300 cursor-pointer">Home</span>
+                        <span className="text-purple-400 hover:text-purple-300 cursor-pointer">Bundles</span>
                         <i className="fa-solid fa-chevron-right text-gray-600"></i>
-                        <span className="text-purple-400 hover:text-purple-300 cursor-pointer">Profiles</span>
-                        <i className="fa-solid fa-chevron-right text-gray-600"></i>
-                        <span className="text-gray-400">Personal</span>
+                        <span className="text-gray-400">{bundle?.name}</span>
                     </div>
                 </div>
 
@@ -416,7 +436,7 @@ const FindTx = () => {
                             <div className="flex-1">
                                 <div className="relative">
                                     <input type="text" placeholder="Search by transaction signature, address or block" className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:border-purple-500"></input>
-                                        <i className="fa-solid fa-search absolute left-3 top-4 text-gray-400"></i>
+                                    <i className="fa-solid fa-search absolute left-3 top-4 text-gray-400"></i>
                                 </div>
                             </div>
                             <div className="flex gap-4">
@@ -435,7 +455,7 @@ const FindTx = () => {
                 </div>
 
                 {/* <!-- Transactions Table --> */}
-                <TransactionTableTx/>
+                <TransactionTableTx bundle={bundle} />
             </main>
         </div>
     );

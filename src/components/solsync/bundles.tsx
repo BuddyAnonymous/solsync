@@ -16,13 +16,25 @@ type Bundle = {
 
 const BundlesPage: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [userBundles, setUserBundles] = useState<Bundle[]>([]);
   const [bundleName, setBundleName] = useState('');
   const [addresses, setAddresses] = useState<string[]>([]); // Start with one input
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editing, setEditing] = useState<Bundle | null>(null);
+  const [userBundles, setUserBundles] = useState<Bundle[]>(() => {
+  if (typeof window === 'undefined') return []; // for SSR safety
+  try {
+    const saved = localStorage.getItem('userBundles');
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+});
 
   const mouseDownOnBackdrop = useRef(false);
+
+  useEffect(() => {
+  localStorage.setItem('userBundles', JSON.stringify(userBundles));
+}, [userBundles]);
 
   useEffect(() => {
     if (editing) {
@@ -123,45 +135,9 @@ const BundlesPage: FC = () => {
 
       <div className="h-full text-base-content bg-gray-900 text-gray-200">
         {/* Header */}
-        <header className="fixed top-0 left-0 w-full bg-gray-900 border-b border-gray-800 z-50">
-          <div className="container mx-auto px-4 flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mr-4">
-                <i className="fa-solid fa-cube text-white" />
-              </div>
-              <div className="relative">
-                <div className="flex items-center bg-gray-800 rounded-lg px-3 py-2">
-                  <i className="fa-solid fa-search text-gray-400 mr-2" />
-                  <input
-                    className="bg-transparent outline-none w-60 text-sm text-gray-200"
-                    placeholder="Search transactions, addresses or bundles"
-                    type="text"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button className="rounded-full bg-gray-800 p-2 cursor-pointer mr-2">
-                <i className="fa-solid fa-bell text-gray-400" />
-              </button>
-              <button className="rounded-full bg-gray-800 p-2 cursor-pointer mr-2">
-                <i className="fa-regular fa-circle-question text-gray-400" />
-              </button>
-              <div className="flex items-center bg-gray-800 rounded-lg px-3 py-2 mr-2">
-                <span className="text-gray-200 font-medium mr-1">0.00</span>
-                <i className="fa-solid fa-diamond text-gray-400 text-xs" />
-              </div>
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center mr-2">
-                  <span className="text-xs text-white">JD</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
 
         {/* Sidebar */}
-        <div className="fixed left-0 top-16 h-full w-16 bg-gray-900 border-r border-gray-800">
+        <div className="fixed left-0 top-12 h-full w-16 bg-gray-900 border-r border-gray-800">
           <div className="flex flex-col items-center py-4">
             {['house', 'chart-simple', 'layer-group', 'user', 'wallet'].map((icon) => (
               <span
@@ -180,10 +156,10 @@ const BundlesPage: FC = () => {
         </div>
 
         {/* Main Content */}
-        <main className="pt-16 min-h-screen container mx-auto px-6 py-6">
+        <main className="min-h-screen mx-auto px-6 py-6 ml-16">
           {/* Breadcrumb */}
           <nav className="flex items-center text-sm text-gray-400 mb-6">
-            {['Home', 'Personal'].map((crumb, idx) => (
+            {['Bundles'].map((crumb, idx) => (
               <span
                 key={crumb}
                 className={`${idx < 2 ? 'hover:text-blue-400 cursor-pointer mr-2' : 'text-gray-300'} flex items-center`}
@@ -210,7 +186,7 @@ const BundlesPage: FC = () => {
               </div>
             </div>
           </div>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
             {userBundles.map((bundle, index) => (
               bundle.name.toLowerCase().includes(searchQuery.toLowerCase()) && (
                 <BundleComp key={index} bundleName={bundle.name} bundleAddresses={bundle.addresses} setUserBundles={setUserBundles} userBundles={userBundles} setEditing={setEditing} editing={editing} />)
