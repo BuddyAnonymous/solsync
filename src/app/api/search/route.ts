@@ -9,7 +9,7 @@ import { getAccount, getMint } from "@solana/spl-token";
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
-    const addresses = searchParams.get('addresses')
+    const addresses = JSON.parse(searchParams.get('addresses'))
 
     if (!addresses) {
         return new Response(JSON.stringify({ error: 'Addresses parameter is required' }), {
@@ -56,8 +56,14 @@ export async function GET(request: NextRequest) {
 
     // console.log('Filter: ', transactionFilter);
 
-    // let results = await fetchTransactionsAndApplyFilters(transactionFilter);
-    let results = mockResults;
+    let results = [];
+    for (const address of addresses) {
+        results.push(await fetchTransactionsAndApplyFilters({
+            account: address,
+            types: ['TokenTransfer', 'SOLTransfer'],
+        } as Filter));
+    }
+
 
     console.log('Results: ', results);
 
@@ -198,10 +204,10 @@ async function getTransactionsForAddress(address: string): Promise<ParsedTransac
 
     // Step 1: Get signatures for the address
     const signatures = await connection.getSignaturesForAddress(publicKey, {
-        limit: 70, // Adjust the limit as needed
+        limit: 5, // Adjust the limit as needed
     });
 
-    // console.log("Signatures:", signatures);
+    console.log("Signatures:", signatures);
 
     // Step 2: Get transaction details for each signature
     const transactions = [];
@@ -237,10 +243,10 @@ interface Entry {
 export async function applyFilters(filter: Filters.Filter): Promise<Entry[]> {
     // Step 1: Get signatures for the address
     const signatures = await connection.getSignaturesForAddress(new PublicKey(filter.account), {
-        limit: 100, // Adjust the limit as needed
+        limit: 5, // Adjust the limit as needed
     });
 
-    // console.log("Signatures:", signatures);
+    console.log("Signatures:", signatures);
 
     // Step 2: Get transaction details for each signature
     // const transactions = [];
