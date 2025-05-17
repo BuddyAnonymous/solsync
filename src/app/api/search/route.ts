@@ -1,11 +1,19 @@
 import { type NextRequest } from 'next/server'
 import { Filter, FilterSchema } from '../../helpers/schema';
 import { stablecoinMints } from '../../helpers/constants';
-
+import { LRUCache } from 'lru-cache'
 import { Connection, clusterApiUrl, PublicKey, ParsedTransactionWithMeta, ParsedInstruction, PartiallyDecodedInstruction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as Filters from "../../helpers/schema";
 import { getAccount, getMint } from "@solana/spl-token";
 // import { applyFilters, fetchTransactionsAndApplyFilters } from '../../helpers/filtering';
+
+const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_API_KEY}`, "confirmed");
+
+
+const cache = new LRUCache({
+  max: 1000,
+  ttl: 1000 * 60 * 10, // cache for 10 minutes
+});
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
@@ -71,6 +79,24 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
     });
+}
+
+export async function getCachedAccountInfo(accountAddress: string): Promise<TokenAccount> {
+  const key = `account:${accountAddress}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const accountInfo = await getAccount(connection, new PublicKey(accountAddress));
+  cache.set(key, accountInfo);
+  return accountInfo;
+}
+
+export async function getCachedMintInfo(mintAddress: string): Promise<Mint> {
+  const key = `mint:${mintAddress}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const mintInfo = await getMint(connection, new PublicKey(mintAddress));
+  cache.set(key, mintInfo);
+  return mintInfo;
 }
 
 const mockResults = [
@@ -195,8 +221,6 @@ const mockResults = [
         token: 'STREAMribRwybYpMmSYoCsQUdr6MZNXEqHgm7p1gu9M'
     }
 ];
-
-const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_API_KEY}`, "confirmed");
 
 async function getTransactionsForAddress(address: string): Promise<ParsedTransactionWithMeta[]> {
 
@@ -430,12 +454,12 @@ async function checkTypeFilterAndReturnEntry(typeFilter: string[], tx: ParsedTra
                     let decimals: number | null = null;
 
                     try {
-                        let sourceTokenAccount = await getAccount(connection, sourcePk);
+                        let sourceTokenAccount = await getCachedAccountInfo(sourcePk);
                         sourceOwner = sourceTokenAccount.owner.toBase58();
                         mint = sourceTokenAccount.mint;
                     } catch (e) {
                         try {
-                            let destTokenAccount = await getAccount(connection, destPk);
+                            let destTokenAccount = await getCachedAccountInfo(destPk);
                             destOwner = destTokenAccount.owner.toBase58();
                             mint = destTokenAccount.mint;
                         } catch (e) {
@@ -444,7 +468,7 @@ async function checkTypeFilterAndReturnEntry(typeFilter: string[], tx: ParsedTra
                     }
 
                     try {
-                        let destTokenAccount = await getAccount(connection, destPk);
+                        let destTokenAccount = await getCachedAccountInfo(destPk);
                         destOwner = destTokenAccount.owner.toBase58();
                     } catch (e) {
                         // console.log("Error getting mint address");
@@ -453,7 +477,7 @@ async function checkTypeFilterAndReturnEntry(typeFilter: string[], tx: ParsedTra
                     if (sourceOwner !== account && authority !== account && destOwner !== account) continue
 
                     if (mint && !decimals) {
-                        let mintAccount = await getMint(connection, new PublicKey(mint));
+                        let mintAccount = await getCachedMintInfo(new PublicKey(mint));
                         decimals = mintAccount.decimals;
                     }
 
