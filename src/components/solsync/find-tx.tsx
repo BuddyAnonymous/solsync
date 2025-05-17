@@ -3,10 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import "./find-tx.css";
 import { useWalletUi } from '@wallet-ui/react';
-import TransactionTableTx from './TransactionTableTx';
 import { useSearchParams } from 'next/navigation'
 import { ellipsify } from '@/lib/utils'
-import { useMemo } from 'react';
 
 
 interface Entry {
@@ -32,133 +30,6 @@ const mintToSymbol: { [key: string]: string } = {
     'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': 'USDC',
     'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': 'USDT',
 };
-
-// let mockTxs = [
-//     {
-//         signature: '5iBvUHPzabvJ69XwspRbDZGiarTA6Vi6nG5AtRKnSzPmKnQ65mvKctmH6WGw7voiTayg7naDq5SxMQ28sbKTRXWP',
-//         time: 1737732293,
-//         action: 'TRANSFER',
-//         from: 'D5xJKhw44fy6SECd2JBVyMKFUTrifwvMTwiCPzDJdBQS',
-//         to: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         fromTokenAccount: 'FV5FNE3iM342q9ekdPhXzx6tejQN588KGsHiFRcoJ5zc',
-//         toTokenAccount: 'CTLrjNFMUBGgfM55d3K8hV22HEE6uQpkeoXqyeNxbTM5',
-//         amount: '5000000000',
-//         decimals: 6,
-//         token: 'kH6hPcpdJqeMAATYU7W4rzqZuzYTkYr6QqGYTLkpump'
-//     },
-//     {
-//         signature: '2m5fo2eG9neCNkhTDXwLi4UwQNRAezTVYUfTcooXJsniuhiuHJWCxd6Nm26sbnE3RgyF7w33WWhjd9mm8rrEvWoE',
-//         time: 1736823624,
-//         action: 'TRANSFER',
-//         from: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         to: '4SBpUJwh88EzRZJnxgYVi9yDc79oUYCNAhJdirRsfJX1',
-//         fromTokenAccount: 'G7Zef75oLzmkvR5xi2vgoszNPvPpGchmooUS8tpkMTxR',
-//         toTokenAccount: 'Ff94GhJ99c4pc2J4HvZbxmSz4k4A6g1XhikJCtQcAyeK',
-//         amount: '7268307',
-//         decimals: 6,
-//         token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-//     },
-//     {
-//         signature: 'T88Jp7CzpUKaP3CCh56dDZx85gojhyGzgJGKnnNrbqCchUVBj5sSphsj7uQMYs6kLKjGDt2p1muq4Txi9qdFMUg',
-//         time: 1736823596,
-//         action: 'TRANSFER',
-//         from: '',
-//         to: 'BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV',
-//         fromTokenAccount: '8cYyX2E4qmDMVVXZuBG2XMyynRgq7fRFTUVSVCsatnbQ',
-//         toTokenAccount: '8ctcHN52LY21FEipCjr1MVWtoZa1irJQTPyAaTj72h7S',
-//         amount: '40000000',
-//         decimals: 9,
-//         token: 'So11111111111111111111111111111111111111112'
-//     },
-//     {
-//         signature: 'T88Jp7CzpUKaP3CCh56dDZx85gojhyGzgJGKnnNrbqCchUVBj5sSphsj7uQMYs6kLKjGDt2p1muq4Txi9qdFMUg',
-//         time: 1736823596,
-//         action: 'TRANSFER',
-//         from: 'BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV',
-//         to: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         fromTokenAccount: '7u7cD7NxcZEuzRCBaYo8uVpotRdqZwez47vvuwzCov43',
-//         toTokenAccount: 'G7Zef75oLzmkvR5xi2vgoszNPvPpGchmooUS8tpkMTxR',
-//         amount: '7268307',
-//         decimals: 6,
-//         token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
-//     },
-//     {
-//         signature: '5FSyfSPrvKRR6XbaHqz3UAybxRAUSFxzsFB9UoZPmQQ3R4JJyfsxxvpHSa9pUwCwdBEZ3XJUbyBh9S9nhwrGAxya',
-//         time: 1736823359,
-//         action: 'TRANSFER',
-//         from: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         to: '9tBgehN4wsnpxi2vhDhudGd8jmKYqgQtoE9Fj8Q9BV16',
-//         fromTokenAccount: 'omES6jFvRoENWR1KgrRebVyq9scEGkyDTETVyNvrX1h',
-//         toTokenAccount: 'JAHFsYKP91g77h3jEbei12jbx6hLgZGTE59hrUZzjPKr',
-//         amount: '100000000',
-//         decimals: 6,
-//         token: 'STREAMribRwybYpMmSYoCsQUdr6MZNXEqHgm7p1gu9M'
-//     },
-//     {
-//         signature: '5FSyfSPrvKRR6XbaHqz3UAybxRAUSFxzsFB9UoZPmQQ3R4JJyfsxxvpHSa9pUwCwdBEZ3XJUbyBh9S9nhwrGAxya',
-//         time: 1736823359,
-//         action: 'TRANSFER',
-//         from: '',
-//         to: '25mYnjJ2MXHZH6NvTTdA63JvjgRVcuiaj6MRiEQNs1Dq',
-//         fromTokenAccount: '3TfVRkiuTSt7ora4a38jqxzdXcU5HLNdhrBiiLYqanYR',
-//         toTokenAccount: '7dSiEK9yWTxxSWpMkjHpY968nJ4Xj4aNgK3sgM23nCeL',
-//         amount: '357995',
-//         decimals: 9,
-//         token: 'So11111111111111111111111111111111111111112'
-//     },
-//     {
-//         signature: '38pHCL95GcGJowevBZ9B6dbRrDPtFu8R4irBhikoJ3oGYcBAy3uwoivaL7j9nmQTWVLa2xzfbsArQjTtg1ktM3Y8',
-//         time: 1734568431,
-//         action: 'TRANSFER',
-//         from: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         to: 'EZwBgDqoWdxE4Yy8giuYH82P8GmvxryzWCbWKUWU8HLH',
-//         fromTokenAccount: '781KAnzgqQzscECAhVpxetMcF9BYpQiT6LppWStN66RU',
-//         toTokenAccount: 'B8xaPRfWS8Ufrd1F9p1PuXyEbSZJNwJPR3LEKtwFLFT8',
-//         amount: '854316173',
-//         decimals: 6,
-//         token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
-//     },
-//     {
-//         signature: '5JQVVaVZMu1PyzZazwP45vQqY8u4AQ9uj11oNwDNWNw3PbmjRkWL5dn6otxhbmgfaz8h49LngYeHgxEGDHw8jH9r',
-//         time: 1734455350,
-//         action: 'TRANSFER',
-//         from: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         to: '3LoAYHuSd7Gh8d7RTFnhvYtiTiefdZ5ByamU42vkzd76',
-//         fromTokenAccount: 'GnaH5QqCLfxWdnAT734Vv3LBNpsVisNiY4V9JaCESvvM',
-//         toTokenAccount: '8pzTZozaSATj5XgpJNRScqphrPqnXAufgouzuUvNRjZJ',
-//         amount: '27840000000',
-//         decimals: 6,
-//         token: '2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv'
-//     },
-//     {
-//         signature: '5JQVVaVZMu1PyzZazwP45vQqY8u4AQ9uj11oNwDNWNw3PbmjRkWL5dn6otxhbmgfaz8h49LngYeHgxEGDHw8jH9r',
-//         time: 1734455350,
-//         action: 'TRANSFER',
-//         from: '3LoAYHuSd7Gh8d7RTFnhvYtiTiefdZ5ByamU42vkzd76',
-//         to: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         fromTokenAccount: 'A5LZUZCbcsTxU2oszHASHpe4Cbo44TTHNy7aan9P7fyA',
-//         toTokenAccount: '781KAnzgqQzscECAhVpxetMcF9BYpQiT6LppWStN66RU',
-//         amount: '854316173',
-//         decimals: 6,
-//         token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
-//     },
-//     {
-//         signature: '8Vmn8p5hCS2bmcTnLsv7U7K9JxuMd27dtvuphFgST8fU7jDjy2qjkETxmnDbGTXC8KjNSFwYrsg9StzcNinrkPe',
-//         time: 1734453912,
-//         action: 'TRANSFER',
-//         from: 'BsL9EiaD1FLhvE1z27s2vSLPCFU9yUY8bphscbunnRag',
-//         to: 'B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk',
-//         fromTokenAccount: '4hbDR2LT5iGGC3mXcbEsRybjWL8Pz3uEZ6YnBLeV91Ae',
-//         toTokenAccount: 'omES6jFvRoENWR1KgrRebVyq9scEGkyDTETVyNvrX1h',
-//         amount: '100000000',
-//         decimals: 6,
-//         token: 'STREAMribRwybYpMmSYoCsQUdr6MZNXEqHgm7p1gu9M'
-//     }
-// ];
-
-function shorten(longString: string): string {
-    return `${longString.slice(0, 4)}...${longString.slice(-4)}`;
-}
 
 export function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
@@ -216,40 +87,24 @@ export function timeAgo(timestamp) {
         return `${diffInSeconds} second${diffInSeconds > 1 ? 's' : ''} ago`;
     }
 }
-function formatTimestamp(timestamp) {
-    const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
-    const day = String(date.getDate()).padStart(2, '0'); // Day with leading zero if necessary
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month with leading zero if necessary
-    const year = date.getFullYear(); // Full year
-    const hours = String(date.getHours()).padStart(2, '0'); // Hours with leading zero
-    const minutes = String(date.getMinutes()).padStart(2, '0'); // Minutes with leading zero
-    const seconds = String(date.getSeconds()).padStart(2, '0'); // Seconds with leading zero
-
-    return `${day}.${month}.${year}. ${hours}:${minutes}:${seconds}`;
-}
 
 function downloadCSV(entries) {
 
     if (!entries.length) return;
 
-    // Define CSV headers
     const headers = Object.keys(entries[0]).join(",");
 
-    // Convert entries array to CSV rows
     const csvRows = entries.map(entry =>
         Object.values(entry).map(value => (value !== undefined ? `${value}` : "")).join(",")
     );
 
-    // Combine headers and rows
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...csvRows].join("\n");
 
-    // Create a download link
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "entries.csv");
 
-    // Trigger download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -262,85 +117,10 @@ const FindTx = () => {
         totalSol?: number;
         solPrice?: number;
         tokens: { mint: string; amount: number; decimals: number; symbol: string; name: string }[];
-        // Add other properties if needed
     }
 
     const [bundleInfo, setBundleInfo] = useState<BundleInfo>({ tokens: [] });
     const [filter, setFilter] = useState<string>('');
-    // const transactions = useMemo(() => [
-    //     {
-    //         "signature": "4RayHWAv1Qt352kUnmVtZJ44TTe741qg7uNGsVVn6H97PrKcjEptFbTLACbFqwQGVqBL4QjTUrcwUwuaQdrhCfBF",
-    //         "time": 1738350722,
-    //         "action": "SOL TRANSFER",
-    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "to": "erzQdrWdvkaivLypG8G6sRspM6mjog6XvqAsmSpszF8",
-    //         "fromTokenAccount": "/",
-    //         "toTokenAccount": "/",
-    //         "amount": 25000000,
-    //         "decimals": 9,
-    //         "token": "NATIVE_SOL"
-    //     },
-    //     {
-    //         "signature": "2CU2oAsALv1LsdiWPfGPiw2AW2D3vKR1iP5RP7yiEqLDNryfvZBEKoPjmM7xRnpj5kDLSxv1fexgVQRsw88JgEyy",
-    //         "time": 1738160570,
-    //         "action": "TOKEN TRANSFER",
-    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "to": "B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk",
-    //         "fromTokenAccount": "AEqdJ8GevKXVcZmzc7Azhfn3hfmnq9qiRosZSjXJtAem",
-    //         "toTokenAccount": "781KAnzgqQzscECAhVpxetMcF9BYpQiT6LppWStN66RU",
-    //         "amount": 184.848846,
-    //         "decimals": 6,
-    //         "token": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
-    //     },
-    //     {
-    //         "signature": "3ZGx4xmnxF5KLLt6GonwqW6Ci8XrYKiLvXfwZvrida9wFWymLPSbrUwtPGeZgYXmSPDixfGTY93zfyg49gzVREnX",
-    //         "time": 1738160453,
-    //         "action": "SOL TRANSFER",
-    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "to": "B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk",
-    //         "fromTokenAccount": "/",
-    //         "toTokenAccount": "/",
-    //         "amount": 30000000,
-    //         "decimals": 9,
-    //         "token": "NATIVE_SOL"
-    //     },
-    //     {
-    //         "signature": "GEqNQpD4cvtrPUjP16xaKbopYcnb8YcBzq6U3HFtpK5PPGsTa8LtrQFpo5PvkJTRUTA7V9XZ3akzBTqAsDkwwkH",
-    //         "time": 1738160235,
-    //         "action": "SOL TRANSFER",
-    //         "from": "Habp5bncMSsBC3vkChyebepym5dcTNRYeg2LVG464E96",
-    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "fromTokenAccount": "/",
-    //         "toTokenAccount": "/",
-    //         "amount": 100,
-    //         "decimals": 9,
-    //         "token": "NATIVE_SOL"
-    //     },
-    //     {
-    //         "signature": "53ZfcVtc26uqbVGzPr115ahNdVwGJgro7JvzchWjDQhUbn8fjr58XGG4Z6THcT3kuf9NEs8BGdnaaFZFbuLdgzNG",
-    //         "time": 1738160235,
-    //         "action": "SOL TRANSFER",
-    //         "from": "fLiPgg2yTvmgfhiPkKriAHkDmmXGP6CdeFX9UF5o7Zc",
-    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "fromTokenAccount": "/",
-    //         "toTokenAccount": "/",
-    //         "amount": 100,
-    //         "decimals": 9,
-    //         "token": "NATIVE_SOL"
-    //     },
-    //     {
-    //         "signature": "MBAjZYF2oG7NsxZpPKxGe5RTnudVAyg26Y3SEqQnHvHb6qPg4iWusBkdBbS6tRi6xcc5uuBx6Zzfi3APQ2iEWTJ",
-    //         "time": 1738160229,
-    //         "action": "TOKEN TRANSFER",
-    //         "from": "HoDMHL8F7s29YzaUALeaeVRfFjXiTNz3F9c4vea1vSQW",
-    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
-    //         "fromTokenAccount": "3mftWZDnBxuurG2xqH95ETwzBZAvvpm2xPUKPQQfUomC",
-    //         "toTokenAccount": "9sV4uj5j59RpQVAnqyT2se7wyyejMQN1WriqDYbEyyRC",
-    //         "amount": 421.427233564,
-    //         "decimals": 9,
-    //         "token": "SonicxvLud67EceaEzCLRnMTBqzYUUYNr93DBkBdDES"
-    //     }
-    // ], []);
     const [isLoading, setIsLoading] = useState(true);
     const [addresses, setAddresses] = useState<string[]>([]);
     const { account } = useWalletUi();
@@ -349,7 +129,6 @@ const FindTx = () => {
     interface Bundle {
         name: string;
         addresses: string[];
-        // Add other properties if needed
     }
     // Fetch search results whenever the query changes
     const fetchSearchResults = async () => {
@@ -434,90 +213,6 @@ const FindTx = () => {
 
         fetchAllTokenSymbols();
     }, [transactions]);
-
-    let previousSignature = null;
-    let isAlternate = false;
-    // return (
-    //     <div className="container">
-    //         <div className='topContainer'>
-    //             <div className='searchContainer'>
-    //                 <input type="text" className='search' place holder='Search...' onChange={(e) => setQuery(e.target.value)}></input>
-    //             </div>
-    //             <div className='searchButtonContainer' onClick={fetchSearchResults}>Search</div>
-    //             <button className="downloadBtn" onClick={() => downloadCSV(transactions)}>Export CSV</button>
-    //         </div>
-    // <ul className="responsive-table">
-    //     <li className="table-header">
-    //         <div className="col headerCol" style={{ left: "2%" }}>Signature</div>
-    //         <div className="col headerCol" style={{ left: "19%" }}>Time</div>
-    //         <div className="col headerCol" style={{ left: "30%" }}>Action</div>
-    //         <div className="col headerCol" style={{ left: "46%" }}>From</div>
-    //         <div className="col headerCol" style={{ left: "62%" }}>To</div>
-    //         <div className="col headerCol" style={{ left: "74%" }}>Amount</div>
-    //         <div className="col headerCol" style={{ left: "88%" }}>Token</div>
-    //     </li>
-
-    //     {transactions.map((tx, index) => {
-    //         if (tx.signature !== previousSignature) {
-    //             isAlternate = !isAlternate;
-    //             previousSignature = tx.signature;
-    //         }
-    //         return (
-    //             <li className={`table-row ${isAlternate ? 'alternate-row' : ''}`} key={index}>
-    //                 <div className="col col-1-1" data-label="Signature">
-    //                     <div className='col-1'>
-    //                         <a href={`https://www.solscan.io/tx/${tx.signature}`} className='signatureLink'>{shorten(tx.signature)}</a>
-    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.signature)} />
-    //                         <div className="tooltip">{tx.signature}</div>
-    //                     </div>
-    //                 </div>
-    //                 <div className='col col-2-1'>
-    //                     <div className="col-2" data-label="Time">
-    //                         <div>{timeAgo(tx.time)}</div>
-    //                         <div className='tooltip tooltipTime'>{formatTimestamp(tx.time)}</div>
-    //                     </div>
-    //                 </div>
-    //                 <div className="col col-3" data-label="Action">
-    //                     {tx.action}
-    //                 </div>
-    //                 <div className="col col-4-1" data-label="From">
-    //                     <div className='col-4'>
-    //                         <a href={`https://www.solscan.io/account/${tx.from}`} className='signatureLink'>{shorten(tx.from)}</a>
-    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.from)} />
-    //                         <div className="tooltip tooltipFrom">{tx.from}</div>
-    //                     </div>
-    //                 </div>
-    //                 <div className="col col-5-1" data-label="To">
-    //                     <div className='col-5'>
-    //                         <a href={`https://www.solscan.io/account/${tx.to}`} className='signatureLink'>{shorten(tx.to)}</a>
-    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.to)} />
-    //                         <div className="tooltip tooltipTo">{tx.to}</div>
-    //                     </div>
-    //                 </div>
-    //                 <div className="col col-6" data-label="Amount">
-    //                     {tx.amount
-    //                         ? tx.action === "TOKEN TRANSFER"
-    //                             ? `${tx.amount}`
-    //                             : `${(parseFloat(tx.amount) / Math.pow(10, tx.decimals)).toFixed(7)}`
-    //                         : "N/A"}
-    //                 </div>
-    //                 <div className="col col-7-1" data-label="Token">
-    //                     <div className='col-7'>
-    //                         <a href={`https://www.solscan.io/account/${tx.token}`} className='signatureLink'>
-    //                             {isLoading ? "Loading..." : (tx.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[tx.token] || "Unknown")}
-    //                         </a>
-    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.token)} />
-    //                         <div className="tooltip tooltipToken">
-    //                             {tx.token}
-    //                         </div>
-    //                     </div>
-    //                 </div>
-    //             </li>
-    //         );
-    //     })}
-    // </ul>
-    //     </div>
-    // );
 
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100">

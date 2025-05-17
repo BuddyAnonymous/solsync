@@ -69,7 +69,7 @@ const BundlesPage: FC = () => {
     fetchAllTokenSymbols();
   }, [transactions]);
 
-  useEffect(() => {
+  useEffect(() => {8
     localStorage.setItem('userBundles', JSON.stringify(userBundles));
   }, [userBundles]);
 

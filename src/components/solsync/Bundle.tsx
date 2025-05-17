@@ -1,6 +1,4 @@
 import React, { useEffect } from "react";
-import { useState } from "react";
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface BundleComp {

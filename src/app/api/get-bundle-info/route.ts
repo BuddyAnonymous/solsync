@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    // 2) for each mint, fetch its DAS metadata in parallel
+    // 2) for each mint, fetch its DAS(digital asset standard) metadata in parallel
     const allTokens = await Promise.all(
         Object.entries(tokens).map(async ([mint, { amount, decimals }]) => {
             const body = {
