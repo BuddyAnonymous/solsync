@@ -9,6 +9,8 @@ import NFTBundle from './NFTBundles';
 import TransactionTable from './TransactionTable';
 import { Address } from 'gill';
 import { useWalletUi } from '@wallet-ui/react';
+import { copyToClipboard, timeAgo, getTokenSymbol } from './find-tx';
+import { ellipsify } from '@/lib/utils';
 
 type Bundle = {
   name: string;
@@ -17,27 +19,59 @@ type Bundle = {
 
 const BundlesPage: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>({});
   const [bundleName, setBundleName] = useState('');
   const [addresses, setAddresses] = useState<string[]>([]); // Start with one input
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editing, setEditing] = useState<Bundle | null>(null);
   const { account } = useWalletUi()
-  const [accountTransactions, setAccountTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  type Transaction = {
+    token: string;
+    signature: string;
+    time: number;
+    action: string;
+    from: string;
+    to: string;
+    amount?: number;
+    decimals?: number;
+    // Add other fields as needed
+  };
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userBundles, setUserBundles] = useState<Bundle[]>(() => {
-  if (typeof window === 'undefined') return []; // for SSR safety
-  try {
-    const saved = localStorage.getItem('userBundles');
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-});
+    if (typeof window === 'undefined') return []; // for SSR safety
+    try {
+      const saved = localStorage.getItem('userBundles');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const mouseDownOnBackdrop = useRef(false);
 
   useEffect(() => {
-  localStorage.setItem('userBundles', JSON.stringify(userBundles));
-}, [userBundles]);
+    const fetchAllTokenSymbols = async () => {
+      const symbolMap: { [mint: string]: string } = {};
+
+      for (const tx of transactions) {
+        if (!symbolMap[tx.token]) {
+          const symbol = await getTokenSymbol(tx.token);
+          symbolMap[tx.token] = symbol;
+        }
+      }
+
+      setTokenSymbols(symbolMap);
+      setIsLoading(false);
+    };
+
+    fetchAllTokenSymbols();
+  }, [transactions]);
+
+  useEffect(() => {
+    localStorage.setItem('userBundles', JSON.stringify(userBundles));
+  }, [userBundles]);
 
   useEffect(() => {
     if (editing) {
@@ -48,15 +82,15 @@ const BundlesPage: FC = () => {
 
   useEffect(() => {
     console.log('Account:', account);
-          if (account !== null && account !== undefined && account.address !== null && account.address !== undefined) {
-              const url = `http://localhost:3000/api/search?addresses=[${encodeURIComponent(JSON.stringify(account.address))}]`;
-              fetch(url)
-                  .then(res => res.json())
-                  .then(data => setAccountTransactions(data.results))
-                  .catch(err => console.error(err));
-  
-          }
-      }), [account];
+    if (account !== null && account !== undefined && account.address !== null && account.address !== undefined) {
+      const url = `http://localhost:3000/api/search?addresses=[${encodeURIComponent(JSON.stringify(account.address))}]`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => setTransactions(data.results.flat()))
+        .catch(err => console.error(err));
+
+    }
+  }, [account]);
 
   const handleAddClick = () => {
     setAddresses([...addresses, '']); // Add empty input
@@ -76,7 +110,7 @@ const BundlesPage: FC = () => {
     setAddresses([]); // Reset addresses when closing the modal
   }
 
-  const handleCreateBundleSubmit = (e: FormEvent<HTMLFormElement>, bundleAddresses: string[]) => {
+  const handleCreateBundleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newBundle: Bundle = {
       name: bundleName,
@@ -90,17 +124,17 @@ const BundlesPage: FC = () => {
     e.preventDefault();
 
     const updatedBundle: Bundle = {
-    ...editing,
-    name: bundleName,
-    addresses: addresses,
-  };
+      ...editing,
+      name: bundleName,
+      addresses: addresses,
+    };
 
-  setUserBundles(prevBundles =>
-    prevBundles.map(bundle =>
-      bundle.name === editing!.name && editing!.addresses === bundle.addresses ? updatedBundle : bundle
-    )
-  );
-  closeModal();
+    setUserBundles(prevBundles =>
+      prevBundles.map(bundle =>
+        bundle.name === editing!.name && editing!.addresses === bundle.addresses ? updatedBundle : bundle
+      )
+    );
+    closeModal();
   }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -207,9 +241,83 @@ const BundlesPage: FC = () => {
                 <BundleComp key={index} bundleName={bundle.name} bundleAddresses={bundle.addresses} setUserBundles={setUserBundles} userBundles={userBundles} setEditing={setEditing} editing={editing} />)
             ))}
           </div>
-          <div id="transactions-section" className="mt-10">
-            <h2 className="text-xl font-medium mb-4">Recent Transactions</h2>
-            <TransactionTable />
+          <h1 className="text-4xl font-bold mt-8 text-center">Recent Transactions</h1>
+          <div id="transactions-table" className="bg-gray-800 rounded-xl overflow-hidden mt-12">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left">Signature</th>
+                    <th className="px-6 py-4 text-left">Time</th>
+                    <th className="px-6 py-4 text-left">Action</th>
+                    <th className="px-6 py-4 text-left">From</th>
+                    <th className="px-6 py-4 text-left">To</th>
+                    <th className="px-6 py-4 text-left">Amount</th>
+                    <th className="px-6 py-4 text-left">Token</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {transactions && transactions?.map((transaction, index) => (
+                    <tr key={index} className="hover:bg-gray-750 relative">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center tooltip-signature">
+                          <span className="text-purple-400">{ellipsify(transaction.signature)}</span>
+                          <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.signature)}></i>
+                          <div className="tooltip">{transaction.signature}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{timeAgo(transaction.time)}</td>
+                      <td className="px-6 py-4">{transaction.action}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center tooltip-from">
+                          <span className="text-purple-400">{ellipsify(transaction.from)}</span>
+                          <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.from)}></i>
+                          <div className="tooltip">{transaction.from}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center tooltip-to">
+                          <span className="text-purple-400">{ellipsify(transaction.to)}</span>
+                          <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.to)}></i>
+                          <div className="tooltip">{transaction.to}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{transaction.amount
+                        ? transaction.action === "TOKEN TRANSFER"
+                          ? `${transaction.amount}`
+                          : `${(transaction.amount / Math.pow(10, transaction.decimals)).toFixed(7)}`
+                        : "N/A"}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center tooltip-token">
+                          <a href={`https://www.solscan.io/account/${transaction.token}`} className="text-purple-400">{isLoading ? "Loading..." : (transaction.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[transaction.token] || "Unknown")}</a>
+                          <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.token)}></i>
+                          <div className="tooltip">{transaction.token}</div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div id="pagination" className="px-6 py-4 bg-gray-750 border-t border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-400">
+                  Showing 1 to 10 of 234 transactions
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button className="px-3 py-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600">
+                    <i className="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <button className="px-3 py-1 rounded bg-purple-600 text-white">1</button>
+                  <button className="px-3 py-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600">2</button>
+                  <button className="px-3 py-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600">3</button>
+                  <button className="px-3 py-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600">
+                    <i className="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* TODO: Stats, Bundles List, Transactions Table */}
@@ -224,7 +332,7 @@ const BundlesPage: FC = () => {
           >
             <div className="bg-gray-800 rounded-xl border border-gray-700 w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-white">{editing ? "Edit Bundle": "Create New Bundle"}</h3>
+                <h3 className="text-xl font-bold text-white">{editing ? "Edit Bundle" : "Create New Bundle"}</h3>
                 <button onClick={closeModal} className="text-gray-400 hover:text-white">
                   <i className="fa-solid fa-xmark text-xl" />
                 </button>
@@ -243,17 +351,17 @@ const BundlesPage: FC = () => {
                     onChange={(e) => setBundleName(e.target.value)}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
-                  />:
-                  <input
-                    id="bundleName"
-                    name="bundleName"
-                    type="text"
-                    placeholder="Enter bundle name"
-                    onChange={(e) => setBundleName(e.target.value)}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-}
+                  /> :
+                    <input
+                      id="bundleName"
+                      name="bundleName"
+                      type="text"
+                      placeholder="Enter bundle name"
+                      onChange={(e) => setBundleName(e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  }
                 </div>
                 <div className="w-full">
                   {/* Scrollable container for inputs */}

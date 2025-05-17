@@ -5,6 +5,9 @@ import "./find-tx.css";
 import { useWalletUi } from '@wallet-ui/react';
 import TransactionTableTx from './TransactionTableTx';
 import { useSearchParams } from 'next/navigation'
+import { ellipsify } from '@/lib/utils'
+import { useMemo } from 'react';
+
 
 interface Entry {
     signature: string;
@@ -157,11 +160,11 @@ function shorten(longString: string): string {
     return `${longString.slice(0, 4)}...${longString.slice(-4)}`;
 }
 
-function copyToClipboard(text: string) {
+export function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
 }
 
-async function getTokenSymbol(mint: string): Promise<string> {
+export async function getTokenSymbol(mint: string): Promise<string> {
     if (mintToSymbol[mint] !== undefined) {
         return mintToSymbol[mint];
     } else {
@@ -190,7 +193,7 @@ async function getTokenSymbol(mint: string): Promise<string> {
     }
 }
 
-function timeAgo(timestamp) {
+export function timeAgo(timestamp) {
     const now = Date.now();
     const diffInSeconds = Math.floor((now - timestamp * 1000) / 1000); // Convert Unix timestamp to seconds
     const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -255,13 +258,94 @@ function downloadCSV(entries) {
 const FindTx = () => {
     const [tokenSymbols, setTokenSymbols] = useState<{ [key: string]: string }>({});
     const [transactions, setTransactions] = useState<Entry[]>([]);
+    interface BundleInfo {
+        totalSol?: number;
+        solPrice?: number;
+        tokens: { mint: string; amount: number; decimals: number; symbol: string; name: string }[];
+        // Add other properties if needed
+    }
+
+    const [bundleInfo, setBundleInfo] = useState<BundleInfo>({ tokens: [] });
+    const [filter, setFilter] = useState<string>('');
+    // const transactions = useMemo(() => [
+    //     {
+    //         "signature": "4RayHWAv1Qt352kUnmVtZJ44TTe741qg7uNGsVVn6H97PrKcjEptFbTLACbFqwQGVqBL4QjTUrcwUwuaQdrhCfBF",
+    //         "time": 1738350722,
+    //         "action": "SOL TRANSFER",
+    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "to": "erzQdrWdvkaivLypG8G6sRspM6mjog6XvqAsmSpszF8",
+    //         "fromTokenAccount": "/",
+    //         "toTokenAccount": "/",
+    //         "amount": 25000000,
+    //         "decimals": 9,
+    //         "token": "NATIVE_SOL"
+    //     },
+    //     {
+    //         "signature": "2CU2oAsALv1LsdiWPfGPiw2AW2D3vKR1iP5RP7yiEqLDNryfvZBEKoPjmM7xRnpj5kDLSxv1fexgVQRsw88JgEyy",
+    //         "time": 1738160570,
+    //         "action": "TOKEN TRANSFER",
+    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "to": "B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk",
+    //         "fromTokenAccount": "AEqdJ8GevKXVcZmzc7Azhfn3hfmnq9qiRosZSjXJtAem",
+    //         "toTokenAccount": "781KAnzgqQzscECAhVpxetMcF9BYpQiT6LppWStN66RU",
+    //         "amount": 184.848846,
+    //         "decimals": 6,
+    //         "token": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+    //     },
+    //     {
+    //         "signature": "3ZGx4xmnxF5KLLt6GonwqW6Ci8XrYKiLvXfwZvrida9wFWymLPSbrUwtPGeZgYXmSPDixfGTY93zfyg49gzVREnX",
+    //         "time": 1738160453,
+    //         "action": "SOL TRANSFER",
+    //         "from": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "to": "B3HaLQyCbwQ5Kmwvj7PxS2no8sTB2yyijg4GA4dbbXMk",
+    //         "fromTokenAccount": "/",
+    //         "toTokenAccount": "/",
+    //         "amount": 30000000,
+    //         "decimals": 9,
+    //         "token": "NATIVE_SOL"
+    //     },
+    //     {
+    //         "signature": "GEqNQpD4cvtrPUjP16xaKbopYcnb8YcBzq6U3HFtpK5PPGsTa8LtrQFpo5PvkJTRUTA7V9XZ3akzBTqAsDkwwkH",
+    //         "time": 1738160235,
+    //         "action": "SOL TRANSFER",
+    //         "from": "Habp5bncMSsBC3vkChyebepym5dcTNRYeg2LVG464E96",
+    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "fromTokenAccount": "/",
+    //         "toTokenAccount": "/",
+    //         "amount": 100,
+    //         "decimals": 9,
+    //         "token": "NATIVE_SOL"
+    //     },
+    //     {
+    //         "signature": "53ZfcVtc26uqbVGzPr115ahNdVwGJgro7JvzchWjDQhUbn8fjr58XGG4Z6THcT3kuf9NEs8BGdnaaFZFbuLdgzNG",
+    //         "time": 1738160235,
+    //         "action": "SOL TRANSFER",
+    //         "from": "fLiPgg2yTvmgfhiPkKriAHkDmmXGP6CdeFX9UF5o7Zc",
+    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "fromTokenAccount": "/",
+    //         "toTokenAccount": "/",
+    //         "amount": 100,
+    //         "decimals": 9,
+    //         "token": "NATIVE_SOL"
+    //     },
+    //     {
+    //         "signature": "MBAjZYF2oG7NsxZpPKxGe5RTnudVAyg26Y3SEqQnHvHb6qPg4iWusBkdBbS6tRi6xcc5uuBx6Zzfi3APQ2iEWTJ",
+    //         "time": 1738160229,
+    //         "action": "TOKEN TRANSFER",
+    //         "from": "HoDMHL8F7s29YzaUALeaeVRfFjXiTNz3F9c4vea1vSQW",
+    //         "to": "87egKZwVkDfgHP7jakP4C5XERz5MaU8owYNG4rQzQDN6",
+    //         "fromTokenAccount": "3mftWZDnBxuurG2xqH95ETwzBZAvvpm2xPUKPQQfUomC",
+    //         "toTokenAccount": "9sV4uj5j59RpQVAnqyT2se7wyyejMQN1WriqDYbEyyRC",
+    //         "amount": 421.427233564,
+    //         "decimals": 9,
+    //         "token": "SonicxvLud67EceaEzCLRnMTBqzYUUYNr93DBkBdDES"
+    //     }
+    // ], []);
     const [isLoading, setIsLoading] = useState(true);
     const [addresses, setAddresses] = useState<string[]>([]);
     const { account } = useWalletUi();
     const searchParams = useSearchParams();
     const [bundle, setBundle] = useState<Bundle | null>(null);
-    const url = `http://localhost:3000/api/search?addresses=${encodeURIComponent(JSON.stringify(bundle?.addresses))}`;
-    console.log(url);
     interface Bundle {
         name: string;
         addresses: string[];
@@ -285,14 +369,41 @@ const FindTx = () => {
     };
 
     useEffect(() => {
+        const raw = sessionStorage.getItem("myAppBundle");
+        if (!raw) return;
+
+        try {
+            setBundle(JSON.parse(raw));
+        } catch (err) {
+            console.error("Parsing error:", err);
+        }
+    }, []);
+
+    useEffect(() => {
         if (bundle !== null) {
+            const url = `http://localhost:3000/api/search?addresses=${encodeURIComponent(JSON.stringify(bundle?.addresses))}`;
             fetch(url)
                 .then(res => res.json())
-                .then(data => setTransactions(data.results))
+                .then(data => {
+                    setTransactions(data.results.flat())
+                })
                 .catch(err => console.error(err));
 
         }
-    }), [bundle];
+    }, [bundle]);
+
+    useEffect(() => {
+        if (bundle !== null) {
+            const url = `http://localhost:3000/api/get-bundle-info?addresses=${encodeURIComponent(JSON.stringify(bundle?.addresses))}`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    setBundleInfo(data)
+                })
+                .catch(err => console.error(err));
+
+        }
+    }, [bundle]);
 
     useEffect(() => {
         const bundleStr = searchParams.get('bundle')
@@ -335,76 +446,76 @@ const FindTx = () => {
     //             <div className='searchButtonContainer' onClick={fetchSearchResults}>Search</div>
     //             <button className="downloadBtn" onClick={() => downloadCSV(transactions)}>Export CSV</button>
     //         </div>
-    //         <ul className="responsive-table">
-    //             <li className="table-header">
-    //                 <div className="col headerCol" style={{ left: "2%" }}>Signature</div>
-    //                 <div className="col headerCol" style={{ left: "19%" }}>Time</div>
-    //                 <div className="col headerCol" style={{ left: "30%" }}>Action</div>
-    //                 <div className="col headerCol" style={{ left: "46%" }}>From</div>
-    //                 <div className="col headerCol" style={{ left: "62%" }}>To</div>
-    //                 <div className="col headerCol" style={{ left: "74%" }}>Amount</div>
-    //                 <div className="col headerCol" style={{ left: "88%" }}>Token</div>
-    //             </li>
+    // <ul className="responsive-table">
+    //     <li className="table-header">
+    //         <div className="col headerCol" style={{ left: "2%" }}>Signature</div>
+    //         <div className="col headerCol" style={{ left: "19%" }}>Time</div>
+    //         <div className="col headerCol" style={{ left: "30%" }}>Action</div>
+    //         <div className="col headerCol" style={{ left: "46%" }}>From</div>
+    //         <div className="col headerCol" style={{ left: "62%" }}>To</div>
+    //         <div className="col headerCol" style={{ left: "74%" }}>Amount</div>
+    //         <div className="col headerCol" style={{ left: "88%" }}>Token</div>
+    //     </li>
 
-    //             {transactions.map((tx, index) => {
-    //                 if (tx.signature !== previousSignature) {
-    //                     isAlternate = !isAlternate;
-    //                     previousSignature = tx.signature;
-    //                 }
-    //                 return (
-    //                     <li className={`table-row ${isAlternate ? 'alternate-row' : ''}`} key={index}>
-    //                         <div className="col col-1-1" data-label="Signature">
-    //                             <div className='col-1'>
-    //                                 <a href={`https://www.solscan.io/tx/${tx.signature}`} className='signatureLink'>{shorten(tx.signature)}</a>
-    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.signature)} />
-    //                                 <div className="tooltip">{tx.signature}</div>
-    //                             </div>
+    //     {transactions.map((tx, index) => {
+    //         if (tx.signature !== previousSignature) {
+    //             isAlternate = !isAlternate;
+    //             previousSignature = tx.signature;
+    //         }
+    //         return (
+    //             <li className={`table-row ${isAlternate ? 'alternate-row' : ''}`} key={index}>
+    //                 <div className="col col-1-1" data-label="Signature">
+    //                     <div className='col-1'>
+    //                         <a href={`https://www.solscan.io/tx/${tx.signature}`} className='signatureLink'>{shorten(tx.signature)}</a>
+    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.signature)} />
+    //                         <div className="tooltip">{tx.signature}</div>
+    //                     </div>
+    //                 </div>
+    //                 <div className='col col-2-1'>
+    //                     <div className="col-2" data-label="Time">
+    //                         <div>{timeAgo(tx.time)}</div>
+    //                         <div className='tooltip tooltipTime'>{formatTimestamp(tx.time)}</div>
+    //                     </div>
+    //                 </div>
+    //                 <div className="col col-3" data-label="Action">
+    //                     {tx.action}
+    //                 </div>
+    //                 <div className="col col-4-1" data-label="From">
+    //                     <div className='col-4'>
+    //                         <a href={`https://www.solscan.io/account/${tx.from}`} className='signatureLink'>{shorten(tx.from)}</a>
+    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.from)} />
+    //                         <div className="tooltip tooltipFrom">{tx.from}</div>
+    //                     </div>
+    //                 </div>
+    //                 <div className="col col-5-1" data-label="To">
+    //                     <div className='col-5'>
+    //                         <a href={`https://www.solscan.io/account/${tx.to}`} className='signatureLink'>{shorten(tx.to)}</a>
+    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.to)} />
+    //                         <div className="tooltip tooltipTo">{tx.to}</div>
+    //                     </div>
+    //                 </div>
+    //                 <div className="col col-6" data-label="Amount">
+    //                     {tx.amount
+    //                         ? tx.action === "TOKEN TRANSFER"
+    //                             ? `${tx.amount}`
+    //                             : `${(parseFloat(tx.amount) / Math.pow(10, tx.decimals)).toFixed(7)}`
+    //                         : "N/A"}
+    //                 </div>
+    //                 <div className="col col-7-1" data-label="Token">
+    //                     <div className='col-7'>
+    //                         <a href={`https://www.solscan.io/account/${tx.token}`} className='signatureLink'>
+    //                             {isLoading ? "Loading..." : (tx.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[tx.token] || "Unknown")}
+    //                         </a>
+    //                         <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.token)} />
+    //                         <div className="tooltip tooltipToken">
+    //                             {tx.token}
     //                         </div>
-    //                         <div className='col col-2-1'>
-    //                             <div className="col-2" data-label="Time">
-    //                                 <div>{timeAgo(tx.time)}</div>
-    //                                 <div className='tooltip tooltipTime'>{formatTimestamp(tx.time)}</div>
-    //                             </div>
-    //                         </div>
-    //                         <div className="col col-3" data-label="Action">
-    //                             {tx.action}
-    //                         </div>
-    //                         <div className="col col-4-1" data-label="From">
-    //                             <div className='col-4'>
-    //                                 <a href={`https://www.solscan.io/account/${tx.from}`} className='signatureLink'>{shorten(tx.from)}</a>
-    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.from)} />
-    //                                 <div className="tooltip tooltipFrom">{tx.from}</div>
-    //                             </div>
-    //                         </div>
-    //                         <div className="col col-5-1" data-label="To">
-    //                             <div className='col-5'>
-    //                                 <a href={`https://www.solscan.io/account/${tx.to}`} className='signatureLink'>{shorten(tx.to)}</a>
-    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.to)} />
-    //                                 <div className="tooltip tooltipTo">{tx.to}</div>
-    //                             </div>
-    //                         </div>
-    //                         <div className="col col-6" data-label="Amount">
-    //                             {tx.amount
-    //                                 ? tx.action === "TOKEN TRANSFER"
-    //                                     ? `${tx.amount}`
-    //                                     : `${(parseFloat(tx.amount) / Math.pow(10, tx.decimals)).toFixed(7)}`
-    //                                 : "N/A"}
-    //                         </div>
-    //                         <div className="col col-7-1" data-label="Token">
-    //                             <div className='col-7'>
-    //                                 <a href={`https://www.solscan.io/account/${tx.token}`} className='signatureLink'>
-    //                                     {isLoading ? "Loading..." : (tx.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[tx.token] || "Unknown")}
-    //                                 </a>
-    //                                 <img src="/copy.png" alt="" className='copyImage' onClick={() => copyToClipboard(tx.token)} />
-    //                                 <div className="tooltip tooltipToken">
-    //                                     {tx.token}
-    //                                 </div>
-    //                             </div>
-    //                         </div>
-    //                     </li>
-    //                 );
-    //             })}
-    //         </ul>
+    //                     </div>
+    //                 </div>
+    //             </li>
+    //         );
+    //     })}
+    // </ul>
     //     </div>
     // );
 
@@ -417,12 +528,6 @@ const FindTx = () => {
                         <div className="flex items-center space-x-2">
                             <i className="fa-brands fa-solana text-purple-500 text-2xl"></i>
                             <span className="text-xl font-bold">Solana Explorer</span>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg flex items-center">
-                                <i className="fa-solid fa-wallet mr-2"></i>
-                                Connect Wallet
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -437,6 +542,57 @@ const FindTx = () => {
                         <span className="text-gray-400">{bundle?.name}</span>
                     </div>
                 </div>
+                <div id="net-worth-section" className="mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* <!-- Total Balance Card --> */}
+                        <div className="bg-gray-800 p-6 rounded-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Total Balance</h3>
+                                <i className="fa-solid fa-wallet text-purple-500"></i>
+                            </div>
+                            <div className="flex items-baseline">
+                                <span className="text-3xl font-bold">{bundleInfo.totalSol}</span>
+                                <span className="ml-2 text-purple-400">SOL</span>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between">
+                                <div className="text-sm text-green-400">
+                                    <i className="fa-solid fa-arrow-trend-up mr-1"></i>
+                                    +2.5% from last week
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                    ≈ {(bundleInfo.solPrice ?? 0) * (bundleInfo.totalSol || 0)} USD
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* <!-- Token List Card --> */}
+                        <div className="bg-gray-800 p-6 rounded-xl md:col-span-2">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold">Owned Tokens</h3>
+                                <button className="text-sm text-purple-400 hover:text-purple-300">View All</button>
+                            </div>
+                            <div className="space-y-4 scrollbar max-h-64 overflow-y-auto">
+                                {bundleInfo.tokens.map((token, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                        <div className="flex items-center">
+                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <i className="fa-solid fa-coins text-white"></i>
+                                            </div>
+                                            <div className="ml-3">
+                                                <div className="font-medium">{token.symbol}</div>
+                                                <div className="text-sm text-gray-400">{token.name}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-medium">{(token.amount / 10 ** token.decimals).toLocaleString()}</div>
+                                            {/* <div className="text-sm text-gray-400">${(token.amount * (bundleInfo.solPrice ?? 0)).toLocaleString()}</div> */}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* <!-- Search and Filters --> */}
                 <div id="search-section" className="mb-8">
@@ -449,11 +605,13 @@ const FindTx = () => {
                                 </div>
                             </div>
                             <div className="flex gap-4">
-                                <select className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500">
-                                    <option>All Types</option>
+                                <select className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" onChange={(e) => setFilter(e.target.value)}>
+                                    <option value="">All Types</option>
                                     <option>Transfer</option>
                                     <option>Swap</option>
                                     <option>NFT</option>
+                                    <option value="SOL TRANSFER">Sol Transfer</option>
+                                    <option value="TOKEN TRANSFER">Token Transfer</option>
                                 </select>
                                 <button className="bg-gray-700 hover:bg-gray-600 px-4 rounded-lg">
                                     <i className="fa-solid fa-filter"></i>
@@ -479,24 +637,44 @@ const FindTx = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {transactions && transactions?.map((transaction, index) => (
-                                    <tr key={index} className="hover:bg-gray-750">
+                                {transactions && transactions?.map((transaction, index) => (transaction.action === filter || filter === "") && (
+                                    <tr key={index} className="hover:bg-gray-750 relative">
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center">
-                                                <span className="text-purple-400">{transaction.signature}</span>
-                                                <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer"></i>
+                                            <div className="flex items-center tooltip-signature">
+                                                <a href={`https://www.solscan.io/tx/${transaction.signature}`} className="text-purple-400">{ellipsify(transaction.signature)}</a>
+                                                <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.signature)}></i>
+                                                <div className="tooltip">{transaction.signature}</div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">time</td>
-                                        <td className="px-6 py-4">1 min ago</td>
-                                        <td className="px-6 py-4">
-                                            <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">Transfer</span>
+                                        <td className="px-6 py-4">{timeAgo(transaction.time)}</td>
+                                        <td className={"px-6 py-4"}>
+                                            <span className={transaction.action === "SOL TRANSFER" ? "bg-pink-500/20 text-pink-400 px-3 py-1 rounded-full" : transaction.action === "TOKEN TRANSFER" ? "bg-green-500/20 text-green-400 px-3 py-1 rounded-full" : "bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full"}>{transaction.action}</span>
                                         </td>
-                                        <td className="px-6 py-4">0.5 SOL</td>
                                         <td className="px-6 py-4">
-                                            <span className="text-green-400">
-                                                <i className="fa-solid fa-check-circle mr-1"></i>Success
-                                            </span>
+                                            <div className="flex items-center tooltip-from">
+                                                <a href={`https://www.solscan.io/account/${transaction.from}`} className="text-purple-400">{ellipsify(transaction.from)}</a>
+                                                <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.from)}></i>
+                                                <div className="tooltip">{transaction.from}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center tooltip-to">
+                                                <a href={`https://www.solscan.io/account/${transaction.to}`} className="text-purple-400">{ellipsify(transaction.to)}</a>
+                                                <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.to)}></i>
+                                                <div className="tooltip">{transaction.to}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">{transaction.amount
+                                            ? transaction.action === "TOKEN TRANSFER"
+                                                ? `${transaction.amount}`
+                                                : `${(transaction.amount / Math.pow(10, transaction.decimals ?? 0)).toFixed(7)}`
+                                            : "N/A"}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center tooltip-token">
+                                                <a href={`https://www.solscan.io/account/${transaction.token}`} className="text-purple-400">{isLoading ? "Loading..." : (transaction.action === "SOL TRANSFER" ? "SOL" : tokenSymbols[transaction.token] || "Unknown")}</a>
+                                                <i className="fa-regular fa-copy ml-2 text-gray-400 cursor-pointer" onClick={() => copyToClipboard(transaction.token)}></i>
+                                                <div className="tooltip">{transaction.token}</div>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

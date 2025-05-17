@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -43,6 +43,9 @@ const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUser
   const handleEditBundle = () => {
     setEditing(currBundle);
   }
+  useEffect(() => {
+  sessionStorage.setItem("myAppBundle", JSON.stringify(currBundle));
+}, [currBundle]);
 
   return (
     <div
@@ -91,8 +94,11 @@ const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUser
 
       <div className="bg-gray-750 border-t border-gray-700 p-3">
         <Link
-          href={`/find-tx?bundle=${encodedBundle}`}
+          href={`/find-tx`}
           className="flex justify-center items-center text-blue-400 hover:text-blue-300 cursor-pointer"
+          onClick={() => {
+            sessionStorage.setItem("myAppBundle", JSON.stringify(currBundle));
+          }}
         >
           View Transactions <i className="fa-solid fa-arrow-right ml-2"></i>
         </Link>

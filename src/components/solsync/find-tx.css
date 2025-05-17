@@ -205,21 +205,6 @@ h2 {
         align-self: center;
     }
 
-    .tooltip {
-        transform: translateX(-50%);
-        background-color: #4f4b4b;
-        color: #fff;
-        padding: 5px 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        white-space: nowrap;
-        visibility: hidden;
-        transition: opacity 0.3s ease;
-        position:absolute;
-        left: 9.5%;
-        top: -20%;
-        min-height: 28px;
-    }
     .col-1:hover .tooltip{
         opacity: 1;
         visibility: visible; 

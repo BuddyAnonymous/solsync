@@ -150,3 +150,55 @@ body, body * {
 .fullwidth{
   width: 100% !important;
 }
+
+.tooltip {
+    transform: translateX(-50%);
+    background-color: #3d3f4b;
+    color: #fff;
+    padding: 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    position: absolute;
+    top: -20%;
+    left: 19%;
+}
+
+.tooltip-signature:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-from:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    left: 51%;
+}
+
+.tooltip-to:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    left: 67%;
+}
+
+.tooltip-token:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    left: 90.5%;
+}
+
+.sm{
+  background-color: rgb(71, 82, 140) !important;
+  color: rgb(241, 245, 249) !important;
+  border-color: rgb(61, 61, 61) !important;
+}
+
+.sm:hover{
+  background-color: rgb(58, 71, 116) !important;
+}
+
+.custom-header{
+  background-color: rgb(28, 37, 62) !important;
+}
