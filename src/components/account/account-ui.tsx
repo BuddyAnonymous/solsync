@@ -48,19 +48,6 @@ export function AccountBalanceCheck({ address }: { address: Address }) {
   if (query.isLoading) {
     return null
   }
-  if (query.isError || !query.data) {
-    return (
-      <AppAlert
-        action={
-          <Button variant="outline" onClick={() => mutation.mutateAsync(1).catch((err) => console.log(err))}>
-            Request Airdrop
-          </Button>
-        }
-      >
-        You are connected to <strong>{cluster.label}</strong> but your account is not found on this cluster.
-      </AppAlert>
-    )
-  }
   return null
 }
 

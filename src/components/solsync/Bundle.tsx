@@ -52,7 +52,7 @@ const BundleComp: React.FC<BundleComp> = ({ bundleName, bundleAddresses, setUser
       id="bundle-1"
       className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden hover:border-blue-500 transition-all duration-200"
     >
-      <div className="p-5">
+      <div className="p-4 min-h-60">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-lg font-medium">{bundleName}</h3>
           <div className="flex">
